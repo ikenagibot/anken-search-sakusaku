@@ -2,299 +2,328 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>テロップスタイル解析ツール — Premiere Pro用</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>テロップスタイル解析ツール Premium</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg0:#0c0c1a;--bg1:#11112a;--bg2:#181832;--bg3:#1e2044;--bg4:#242550;
-  --accent:#7c6fff;--accent2:#ff6b8a;--accent3:#4ecdc4;
-  --text:#e8e8f4;--dim:#7a7aaa;--border:#2a2a55;
-  --success:#4ade80;--warn:#facc15;--err:#f87171;
+  --bg0:#0a0a18;--bg1:#10102a;--bg2:#161633;--bg3:#1c1c40;--bg4:#22224d;
+  --acc:#7b68ff;--acc2:#ff6b8a;--acc3:#4ecdc4;--acc4:#ffd700;
+  --txt:#e8e8f6;--dim:#7070a0;--bdr:#252550;
+  --s:#4ade80;--w:#facc15;--e:#f87171;
 }
-
-body{background:var(--bg0);color:var(--text);
+body{background:var(--bg0);color:var(--txt);
   font-family:-apple-system,'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif;
-  font-size:13px;line-height:1.5;min-height:100vh;overflow:hidden}
+  font-size:12px;line-height:1.5;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-/* ─── Header ─── */
-.hd{background:linear-gradient(135deg,#0a0a28,#16104a);
-  padding:12px 24px;display:flex;align-items:center;gap:14px;
-  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
-.hd-icon{font-size:26px}
-.hd-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
-.hd-sub{font-size:11px;color:var(--dim)}
-.badge{margin-left:auto;background:var(--accent);color:#fff;
-  padding:3px 11px;border-radius:100px;font-size:11px;font-weight:700}
+/* ── Header ── */
+.hd{background:linear-gradient(135deg,#08082a,#14104a);padding:10px 20px;
+  display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.hd-title{font-size:16px;font-weight:700;color:#fff}
+.hd-sub{font-size:10px;color:var(--dim);margin-top:1px}
+.badge{background:var(--acc);color:#fff;padding:2px 10px;border-radius:100px;
+  font-size:10px;font-weight:700;margin-left:auto}
 
-/* ─── Layout ─── */
-.layout{display:grid;grid-template-columns:1fr 400px;
-  height:calc(100vh - 55px)}
+/* ── Layout ── */
+.layout{flex:1;display:grid;grid-template-columns:1fr 440px;overflow:hidden}
 
-/* ─── Left: Canvas Area ─── */
-.left{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
-
-.drop-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border:2.5px dashed var(--border);border-radius:14px;margin:16px;cursor:pointer;
-  transition:all .2s;background:var(--bg2);gap:10px}
-.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(124,111,255,.07)}
-.drop-icon{font-size:52px}
-.drop-title{font-size:16px;font-weight:600}
-.drop-sub{font-size:12px;color:var(--dim);text-align:center;padding:0 20px}
-.drop-sub b{color:var(--accent)}
-
-.canvas-area{flex:1;overflow:auto;background:#111;position:relative;display:none;cursor:none}
-#img-canvas{display:block;cursor:none}
-
-/* Magnifier overlay */
-#magnifier{position:fixed;pointer-events:none;display:none;z-index:300;
-  border-radius:50%;border:3px solid #fff;box-shadow:0 4px 24px rgba(0,0,0,.8);overflow:hidden}
-#mag-label{position:fixed;pointer-events:none;display:none;z-index:301;
-  background:rgba(0,0,0,.85);color:#fff;padding:3px 8px;border-radius:6px;
-  font-size:11px;font-family:monospace;white-space:nowrap}
-
-/* Sampling mode bar */
-.mode-bar{background:var(--bg3);padding:8px 16px;display:none;
-  align-items:center;gap:6px;border-top:1px solid var(--border);flex-shrink:0}
-.mode-label{font-size:11px;color:var(--dim);margin-right:2px}
-.mbtn{padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);
-  background:transparent;color:var(--dim);cursor:pointer;font-size:11px;
+/* ── Left ── */
+.left{display:flex;flex-direction:column;border-right:1px solid var(--bdr);overflow:hidden}
+.dz{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2px dashed var(--bdr);border-radius:12px;margin:14px;cursor:pointer;
+  background:var(--bg2);gap:8px;transition:all .2s}
+.dz:hover,.dz.over{border-color:var(--acc);background:rgba(123,104,255,.07)}
+.dz-icon{font-size:44px}.dz-title{font-size:15px;font-weight:600}
+.dz-sub{font-size:11px;color:var(--dim);text-align:center;padding:0 16px}
+.dz-sub b{color:var(--acc)}
+.ca{flex:1;overflow:auto;background:#080810;position:relative;display:none}
+#ic{display:block;cursor:crosshair}
+#magnifier{position:fixed;width:80px;height:80px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.9);
+  display:none;pointer-events:none;z-index:999}
+#mag-lbl{position:fixed;background:rgba(0,0,0,.88);color:#fff;padding:2px 7px;
+  border-radius:5px;font-size:10px;font-family:monospace;display:none;
+  pointer-events:none;z-index:999;white-space:nowrap}
+.mbar{background:var(--bg3);padding:7px 14px;display:none;
+  align-items:center;gap:5px;border-top:1px solid var(--bdr);flex-shrink:0;flex-wrap:wrap}
+.mbtn{padding:3px 10px;border-radius:16px;border:1.5px solid var(--bdr);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:10px;
   font-family:inherit;transition:all .15s}
-.mbtn:hover{border-color:var(--accent);color:var(--text)}
-.mbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.mode-hint{margin-left:auto;font-size:11px;color:var(--dim)}
-.cursor-color{width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:inline-block;vertical-align:middle}
+.mbtn:hover{border-color:var(--acc);color:var(--txt)}
+.mbtn.active{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.mhint{margin-left:auto;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:5px}
+.cur-sw{width:16px;height:16px;border-radius:50%;border:2px solid #fff;display:inline-block}
 
-/* ─── Right: Panel ─── */
+/* ── Right panel ── */
 .right{background:var(--bg1);overflow-y:auto;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
 
-.sec{padding:16px 18px;border-bottom:1px solid var(--border)}
-.sec-title{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+/* Top fixed area */
+.top-fixed{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.name-row{display:flex;gap:6px}
+.name-row label{font-size:10px;color:var(--dim);white-space:nowrap;align-self:center}
+.name-row input{flex:1}
+.preset-row{display:flex;gap:6px;align-items:center}
+.preset-row label{font-size:10px;color:var(--dim);white-space:nowrap}
+.preset-row select{flex:1;font-size:11px}
 
-/* Color rows */
-.cr{display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;
-  padding:6px 8px;border-radius:10px;transition:background .15s;position:relative}
+/* Accordion */
+.acc{border-bottom:1px solid var(--bdr)}
+.acc-h{padding:9px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;
+  user-select:none;transition:background .15s}
+.acc-h:hover{background:var(--bg3)}
+.acc-title{flex:1;font-size:11px;font-weight:700;letter-spacing:.4px}
+.acc-arrow{color:var(--dim);font-size:9px;transition:transform .2s}
+.acc-body{overflow:hidden;max-height:0;transition:max-height .25s ease}
+.acc-body.open{max-height:800px}
+.acc-inner{padding:10px 16px 14px}
+
+/* Enable toggle mini */
+.tog-mini{position:relative;width:32px;height:18px;flex-shrink:0}
+.tog-mini input{opacity:0;width:0;height:0}
+.tm-sl{position:absolute;inset:0;background:var(--bdr);border-radius:100px;
+  cursor:pointer;transition:background .2s}
+.tm-sl::before{content:'';position:absolute;width:12px;height:12px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.tog-mini input:checked+.tm-sl{background:var(--acc)}
+.tog-mini input:checked+.tm-sl::before{transform:translateX(14px)}
+
+/* Forms */
+.fr{margin-bottom:9px}
+.fl{font-size:10px;color:var(--dim);margin-bottom:3px;display:flex;
+  justify-content:space-between;align-items:center}
+.fl .fv{color:var(--acc);font-weight:700;font-family:monospace}
+input[type=text],input[type=number],select,textarea{
+  width:100%;background:var(--bg0);border:1.5px solid var(--bdr);
+  border-radius:7px;color:var(--txt);padding:6px 10px;font-size:11px;
+  font-family:inherit;outline:none;transition:border-color .15s}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{border-color:var(--acc)}
+select option{background:var(--bg0)}
+
+.rr{display:flex;gap:7px;align-items:center}
+.rr input[type=range]{flex:1;accent-color:var(--acc);height:4px}
+.rv{background:var(--bg0);border:1.5px solid var(--bdr);border-radius:5px;
+  padding:3px 7px;font-size:11px;font-family:monospace;min-width:38px;text-align:center}
+
+/* Color row */
+.cr{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;
+  cursor:pointer;transition:background .15s;margin-bottom:4px}
 .cr:hover{background:var(--bg3)}
-.cr.active-row::before{content:'►';position:absolute;left:-4px;color:var(--accent);font-size:10px}
-.swatch{width:38px;height:38px;border-radius:9px;border:2px solid var(--border);flex-shrink:0;
-  background:repeating-conic-gradient(#333 0% 25%,#444 0% 50%) 0 0/8px 8px;
-  transition:transform .1s}
-.swatch:hover{transform:scale(1.08)}
+.cr.active-cr{background:var(--bg4)}
+.sw{width:34px;height:34px;border-radius:8px;border:2px solid var(--bdr);flex-shrink:0;
+  background:conic-gradient(#333 90deg,#444 90deg 180deg,#333 180deg 270deg,#444 270deg) 0/10px 10px}
 .ci{flex:1;min-width:0}
-.ci-label{font-size:10px;color:var(--dim)}
-.ci-hex{font-size:14px;font-weight:700;font-family:monospace;letter-spacing:1px}
-.ci-rgb{font-size:10px;color:var(--dim);font-family:monospace}
-.cp-wrap{position:relative;width:30px;height:30px;flex-shrink:0}
-.cp-wrap input[type=color]{position:absolute;inset:0;width:100%;height:100%;
-  opacity:0;cursor:pointer;border:none;padding:0}
-.cp-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:16px;pointer-events:none;background:var(--bg3);border-radius:8px;
-  border:1.5px solid var(--border)}
+.ci-lbl{font-size:10px;color:var(--dim)}
+.ci-hex{font-size:13px;font-weight:700;font-family:monospace;letter-spacing:.5px}
+.ci-rgb{font-size:9px;color:var(--dim);font-family:monospace}
+.cp-w{position:relative;width:26px;height:26px;flex-shrink:0}
+.cp-w input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.cp-w::after{content:'🖊';position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:14px;pointer-events:none;background:var(--bg3);
+  border-radius:7px;border:1.5px solid var(--bdr)}
+
+/* Toggle row */
+.tr2{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.tr2-lbl{font-size:11px}
+.tog{position:relative;width:32px;height:18px}
+.tog input{opacity:0;width:0;height:0}
+.ts{position:absolute;inset:0;background:var(--bdr);border-radius:100px;
+  cursor:pointer;transition:background .2s}
+.ts::before{content:'';position:absolute;width:12px;height:12px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.tog input:checked+.ts{background:var(--acc)}
+.tog input:checked+.ts::before{transform:translateX(14px)}
+
+/* Alignment buttons */
+.aln-row{display:flex;gap:5px;margin-bottom:9px}
+.aln-btn{flex:1;padding:6px;border-radius:7px;border:1.5px solid var(--bdr);
+  background:var(--bg0);color:var(--dim);cursor:pointer;font-size:14px;
+  transition:all .15s;font-family:inherit}
+.aln-btn:hover{border-color:var(--acc)}
+.aln-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* Style buttons (bold/italic) */
+.style-btns{display:flex;gap:5px;margin-bottom:9px}
+.sty-btn{flex:1;padding:5px;border-radius:7px;border:1.5px solid var(--bdr);
+  background:var(--bg0);color:var(--dim);cursor:pointer;font-size:12px;
+  transition:all .15s;font-family:serif}
+.sty-btn:hover{border-color:var(--acc)}
+.sty-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* Fill type tabs */
+.ft-tabs{display:flex;gap:4px;margin-bottom:9px}
+.ft-tab{flex:1;padding:5px;border-radius:7px;border:1.5px solid var(--bdr);
+  background:var(--bg0);color:var(--dim);cursor:pointer;font-size:10px;
+  font-weight:700;text-align:center;transition:all .15s;font-family:inherit}
+.ft-tab:hover{border-color:var(--acc)}
+.ft-tab.active{background:var(--acc);border-color:var(--acc);color:#fff}
 
 /* Palette chips */
-.palette{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.chip{width:26px;height:26px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;
-  transition:transform .15s,border-color .15s;position:relative}
-.chip:hover{transform:scale(1.25);border-color:#fff}
-.chip-tip{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
-  background:#000d;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;
+.palette{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{width:24px;height:24px;border-radius:50%;border:2px solid transparent;
+  cursor:pointer;transition:transform .15s,border-color .15s;position:relative}
+.chip:hover{transform:scale(1.3);border-color:#fff}
+.chip-tip{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  background:#000c;color:#fff;padding:2px 5px;border-radius:4px;font-size:9px;
   white-space:nowrap;pointer-events:none;display:none}
 .chip:hover .chip-tip{display:block}
 
-.analyze-btn{width:100%;padding:8px;border-radius:8px;
-  border:1.5px solid var(--accent);background:rgba(124,111,255,.1);
-  color:var(--accent);cursor:pointer;font-size:12px;font-weight:700;
-  font-family:inherit;transition:all .2s;margin-bottom:10px}
-.analyze-btn:hover{background:rgba(124,111,255,.22)}
-.analyze-btn:disabled{opacity:.35;cursor:default}
-
-/* Form */
-.fr{margin-bottom:11px}
-.fl{font-size:10px;color:var(--dim);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
-.fl span{color:var(--accent);font-weight:700}
-
-input[type=text],input[type=number],select{width:100%;background:var(--bg0);
-  border:1.5px solid var(--border);border-radius:8px;color:var(--text);
-  padding:8px 11px;font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
-input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--accent)}
-select option{background:var(--bg0)}
-
-.rr{display:flex;gap:8px;align-items:center}
-.rr input[type=range]{flex:1;accent-color:var(--accent)}
-.rv{background:var(--bg0);border:1.5px solid var(--border);border-radius:6px;
-  padding:4px 7px;font-size:11px;font-family:monospace;min-width:40px;text-align:center}
-
-.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.tog-lbl{font-size:12px;display:flex;align-items:center;gap:6px}
-.tog{position:relative;width:36px;height:20px}
-.tog input{opacity:0;width:0;height:0}
-.tog-sl{position:absolute;inset:0;background:var(--border);border-radius:100px;cursor:pointer;transition:background .2s}
-.tog-sl::before{content:'';position:absolute;width:14px;height:14px;background:#fff;
-  border-radius:50%;top:3px;left:3px;transition:transform .2s}
-.tog input:checked+.tog-sl{background:var(--accent)}
-.tog input:checked+.tog-sl::before{transform:translateX(16px)}
+.abtn{width:100%;padding:7px;border-radius:7px;border:1.5px solid var(--acc);
+  background:rgba(123,104,255,.1);color:var(--acc);cursor:pointer;font-size:11px;
+  font-weight:700;font-family:inherit;transition:all .2s;margin-bottom:8px}
+.abtn:hover{background:rgba(123,104,255,.22)}
+.abtn:disabled{opacity:.35;cursor:default}
 
 /* Preview */
-.prev-wrap{background:#111;border-radius:10px;overflow:hidden;margin-top:8px;
-  display:flex;align-items:center;justify-content:center;min-height:90px;
-  border:1px solid var(--border)}
-#prev-canvas{max-width:100%}
+.prev-wrap{background:#111;border-radius:10px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;min-height:120px;
+  border:1px solid var(--bdr);position:relative}
+#pc{max-width:100%;display:block}
+.prev-bg-row{display:flex;gap:6px;margin-top:6px;align-items:center}
+.prev-bg-row label{font-size:10px;color:var(--dim)}
+.bg-chip{width:20px;height:20px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s;flex-shrink:0}
+.bg-chip.sel{border-color:#fff}
 
 /* Export */
-.ebtn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;
-  font-size:13px;font-weight:700;font-family:inherit;transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:7px}
-.eb-primary{background:linear-gradient(135deg,var(--accent),#a855f7);color:#fff}
-.eb-primary:hover{opacity:.88;transform:translateY(-1px)}
-.eb-sec{background:var(--bg3);color:var(--text);border:1.5px solid var(--border)}
-.eb-sec:hover{border-color:var(--accent)}
-.tip{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.4}
+.eb{width:100%;padding:11px;border-radius:9px;border:none;cursor:pointer;
+  font-size:12px;font-weight:700;font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:6px}
+.eb-pri{background:linear-gradient(135deg,var(--acc),#a855f7);color:#fff}
+.eb-pri:hover{opacity:.88;transform:translateY(-1px)}
+.eb-sec{background:var(--bg3);color:var(--txt);border:1.5px solid var(--bdr)}
+.eb-sec:hover{border-color:var(--acc)}
+.tip{font-size:10px;color:var(--dim);line-height:1.5;margin-top:4px}
 
-/* Scrollbar */
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.sec-title{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:10px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grad-box{border:1.5px solid var(--bdr);border-radius:8px;padding:8px;margin-bottom:8px;
+  background:var(--bg0);display:none}
+.grad-box.show{display:block}
+.sep{height:1px;background:var(--bdr);margin:8px 0}
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="hd">
-  <div class="hd-icon">🎬</div>
-  <div>
-    <div class="hd-title">テロップスタイル解析ツール</div>
-    <div class="hd-sub">スクリーンショットを読み取り → カラー・設定を自動分析 → Premiere Pro 用スタイルを生成</div>
-  </div>
+  <div style="font-size:24px">🎬</div>
+  <div><div class="hd-title">テロップスタイル解析ツール Premium</div>
+    <div class="hd-sub">スクリーンショット解析 → TV・有料級テロップを再現 → Premiere Pro用スタイルを生成</div></div>
   <span class="badge">for Premiere Pro</span>
 </div>
 
 <div class="layout">
+<!-- ═══ LEFT ═══ -->
+<div class="left">
+  <div class="dz" id="dz">
+    <div class="dz-icon">🖼️</div>
+    <div class="dz-title">スクリーンショットをドロップ</div>
+    <div class="dz-sub">または<b>クリック/Ctrl+V</b>で画像を読込<br>PNG・JPG・WEBP | ブラウザ内処理・外部送信なし</div>
+    <input type="file" id="fi" accept="image/*" style="display:none">
+  </div>
+  <div class="ca" id="ca"><canvas id="ic"></canvas></div>
+  <div class="mbar" id="mb">
+    <span style="font-size:10px;color:var(--dim)">取得する色:</span>
+    <button class="mbtn active" data-m="fill">📝 文字</button>
+    <button class="mbtn" data-m="fill2">📝 文字2(グラデ)</button>
+    <button class="mbtn" data-m="stroke1">🔲 縁取り1</button>
+    <button class="mbtn" data-m="stroke2">🔲 縁取り2</button>
+    <button class="mbtn" data-m="shadow">🌑 影</button>
+    <button class="mbtn" data-m="box">▭ 背景</button>
+    <span class="mhint"><span class="cur-sw" id="csw"></span><span id="chx" style="font-family:monospace;font-size:10px">—</span></span>
+  </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════
-       LEFT: Image Area
-  ═══════════════════════════════════════════ -->
-  <div class="left">
-    <!-- Drop zone (hidden when image loaded) -->
-    <div class="drop-zone" id="dz">
-      <div class="drop-icon">🖼️</div>
-      <div class="drop-title">スクリーンショットをここにドロップ</div>
-      <div class="drop-sub">または <b>クリックしてファイルを選択</b><br>PNG / JPG / WEBP · データは外部送信されません</div>
-      <input type="file" id="fi" accept="image/*" style="display:none">
-    </div>
+<!-- ═══ RIGHT ═══ -->
+<div class="right">
 
-    <!-- Canvas (shown after upload) -->
-    <div class="canvas-area" id="ca">
-      <canvas id="img-canvas"></canvas>
-    </div>
+<!-- Top: Name + Preset -->
+<div class="top-fixed">
+  <div class="name-row">
+    <label>スタイル名:</label>
+    <input type="text" id="sname" value="マイテロップスタイル" placeholder="スタイル名">
+    <label style="margin-left:4px">ファイル名:</label>
+    <input type="text" id="fname" value="my_telop" placeholder="保存ファイル名" style="width:100px">
+  </div>
+  <div class="preset-row">
+    <label>プリセット:</label>
+    <select id="psel" onchange="loadPreset(this.value)">
+      <option value="">── テレビ・有料級プリセットを読み込む ──</option>
+      <optgroup label="バラエティ・情報番組">
+        <option value="var_std">バラエティ標準（白・黒縁）</option>
+        <option value="var_yel">バラエティ強調（黄・二重縁）</option>
+        <option value="var_red">インパクト強調（赤・白縁）</option>
+        <option value="var_twin">有料級二重縁テロップ</option>
+      </optgroup>
+      <optgroup label="ドキュメンタリー・インタビュー">
+        <option value="nhk_doc">NHK風クリーンテロップ</option>
+        <option value="doc_int">インタビュー字幕</option>
+        <option value="doc_cap">ロケーション・日時キャプション</option>
+      </optgroup>
+      <optgroup label="ニュース・報道">
+        <option value="news_lt">ニュース・ロウワーサード（青帯）</option>
+        <option value="news_br">速報テロップ（赤帯）</option>
+        <option value="news_scroll">速報スクロール（黄文字・黒帯）</option>
+      </optgroup>
+      <optgroup label="YouTube・SNS・映像制作">
+        <option value="yt_pop">YouTube ポップテロップ</option>
+        <option value="yt_thumb">サムネイル風ビッグテキスト</option>
+        <option value="cinema">シネマ風テロップ（グラデ）</option>
+        <option value="biz_clean">ビジネス・コーポレート</option>
+      </optgroup>
+    </select>
+  </div>
+</div>
 
-    <!-- Sampling mode bar -->
-    <div class="mode-bar" id="mb">
-      <span class="mode-label">取得する色:</span>
-      <button class="mbtn active" data-m="fill">📝 文字色</button>
-      <button class="mbtn" data-m="stroke">🔲 縁取り色</button>
-      <button class="mbtn" data-m="shadow">🌑 シャドウ色</button>
-      <button class="mbtn" data-m="bg">🎨 背景色</button>
-      <span class="mode-hint" id="cursor-info">
-        <span class="cursor-color" id="cur-swatch"></span>
-        <span id="cur-hex" style="margin-left:5px;font-family:monospace;font-size:11px">—</span>
-      </span>
+<!-- ── Section: カラー解析 ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <span class="acc-title">🔍 カラー解析（画像から自動抽出）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body open">
+    <div class="acc-inner">
+      <button class="abtn" id="abtn" disabled onclick="autoAnalyze()">✨ 主要カラーを自動検出</button>
+      <div class="palette" id="pal"></div>
+      <p class="tip" style="margin-bottom:8px">チップをクリック → 現在選択中の色枠に設定。画像を直接クリックでも取得できます。</p>
+      <div class="sec-title">取得済みカラー</div>
+      <div id="cr-fill"   class="cr active-cr" data-m="fill">   <div class="sw" id="sw-fill"></div>  <div class="ci"><div class="ci-lbl">文字色 (Fill)</div><div class="ci-hex" id="hx-fill">#FFFFFF</div><div class="ci-rgb" id="rb-fill">R:255 G:255 B:255</div></div><div class="cp-w"><input type="color" id="cp-fill" value="#ffffff" oninput="onCp('fill',this.value)"></div></div>
+      <div id="cr-fill2"  class="cr" data-m="fill2">  <div class="sw" id="sw-fill2"></div> <div class="ci"><div class="ci-lbl">文字色2 (グラデーション用)</div><div class="ci-hex" id="hx-fill2">#CCCCCC</div><div class="ci-rgb" id="rb-fill2">R:204 G:204 B:204</div></div><div class="cp-w"><input type="color" id="cp-fill2" value="#cccccc" oninput="onCp('fill2',this.value)"></div></div>
+      <div id="cr-stroke1" class="cr" data-m="stroke1"><div class="sw" id="sw-stroke1"></div><div class="ci"><div class="ci-lbl">縁取り色1 (内側)</div><div class="ci-hex" id="hx-stroke1">#000000</div><div class="ci-rgb" id="rb-stroke1">R:0 G:0 B:0</div></div><div class="cp-w"><input type="color" id="cp-stroke1" value="#000000" oninput="onCp('stroke1',this.value)"></div></div>
+      <div id="cr-stroke2" class="cr" data-m="stroke2"><div class="sw" id="sw-stroke2"></div><div class="ci"><div class="ci-lbl">縁取り色2 (外側)</div><div class="ci-hex" id="hx-stroke2">#FFFFFF</div><div class="ci-rgb" id="rb-stroke2">R:255 G:255 B:255</div></div><div class="cp-w"><input type="color" id="cp-stroke2" value="#ffffff" oninput="onCp('stroke2',this.value)"></div></div>
+      <div id="cr-shadow" class="cr" data-m="shadow"> <div class="sw" id="sw-shadow"></div> <div class="ci"><div class="ci-lbl">シャドウ色</div><div class="ci-hex" id="hx-shadow">#000000</div><div class="ci-rgb" id="rb-shadow">R:0 G:0 B:0</div></div><div class="cp-w"><input type="color" id="cp-shadow" value="#000000" oninput="onCp('shadow',this.value)"></div></div>
+      <div id="cr-box"    class="cr" data-m="box">    <div class="sw" id="sw-box"></div>    <div class="ci"><div class="ci-lbl">背景ボックス色</div><div class="ci-hex" id="hx-box">#003CA0</div><div class="ci-rgb" id="rb-box">R:0 G:60 B:160</div></div><div class="cp-w"><input type="color" id="cp-box" value="#003ca0" oninput="onCp('box',this.value)"></div></div>
     </div>
   </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════
-       RIGHT: Analysis Panel
-  ═══════════════════════════════════════════ -->
-  <div class="right">
-
-    <!-- Auto Analysis -->
-    <div class="sec">
-      <div class="sec-title">🔍 自動カラー解析</div>
-      <button class="analyze-btn" id="abtn" disabled>✨ 画像から主要カラーを自動検出</button>
-      <div class="palette" id="palette"></div>
-      <p class="tip">チップをクリック → 現在選択中の枠に色を設定 | 右の「取得する色」を切り替えてから画像をクリックでも取得できます</p>
-    </div>
-
-    <!-- Colors -->
-    <div class="sec">
-      <div class="sec-title">🎨 カラー設定</div>
-      <div class="cr active-row" id="row-fill" data-m="fill">
-        <div class="swatch" id="sw-fill"></div>
-        <div class="ci">
-          <div class="ci-label">文字色 (Fill)</div>
-          <div class="ci-hex" id="hx-fill">—</div>
-          <div class="ci-rgb" id="rb-fill"></div>
-        </div>
-        <div class="cp-wrap">
-          <input type="color" id="cp-fill" value="#ffffff">
-          <div class="cp-icon">🖊</div>
-        </div>
-      </div>
-      <div class="cr" id="row-stroke" data-m="stroke">
-        <div class="swatch" id="sw-stroke"></div>
-        <div class="ci">
-          <div class="ci-label">縁取り色 (Stroke)</div>
-          <div class="ci-hex" id="hx-stroke">—</div>
-          <div class="ci-rgb" id="rb-stroke"></div>
-        </div>
-        <div class="cp-wrap">
-          <input type="color" id="cp-stroke" value="#000000">
-          <div class="cp-icon">🖊</div>
-        </div>
-      </div>
-      <div class="cr" id="row-shadow" data-m="shadow">
-        <div class="swatch" id="sw-shadow"></div>
-        <div class="ci">
-          <div class="ci-label">シャドウ色 (Shadow)</div>
-          <div class="ci-hex" id="hx-shadow">—</div>
-          <div class="ci-rgb" id="rb-shadow"></div>
-        </div>
-        <div class="cp-wrap">
-          <input type="color" id="cp-shadow" value="#000000">
-          <div class="cp-icon">🖊</div>
-        </div>
-      </div>
-      <div class="cr" id="row-bg" data-m="bg">
-        <div class="swatch" id="sw-bg"></div>
-        <div class="ci">
-          <div class="ci-label">背景色 (Background)</div>
-          <div class="ci-hex" id="hx-bg">—</div>
-          <div class="ci-rgb" id="rb-bg"></div>
-        </div>
-        <div class="cp-wrap">
-          <input type="color" id="cp-bg" value="#1e1e1e">
-          <div class="cp-icon">🖊</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Style Settings -->
-    <div class="sec">
-      <div class="sec-title">⚙️ スタイル設定</div>
-
-      <div class="fr">
-        <div class="fl">スタイル名</div>
-        <input type="text" id="sname" value="マイテロップスタイル">
-      </div>
-
+<!-- ── Section: テキスト設定 ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <span class="acc-title">📝 テキスト設定</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body open">
+    <div class="acc-inner">
       <div class="fr">
         <div class="fl">フォントファミリー</div>
-        <select id="ffam">
-          <optgroup label="ヒラギノ (macOS)">
-            <option value="HiraKakuProN-W6">ヒラギノ角ゴ W6 (太)</option>
-            <option value="HiraKakuProN-W3">ヒラギノ角ゴ W3 (細)</option>
-            <option value="HiraKakuStd-W8">ヒラギノ角ゴ W8 (特太)</option>
+        <select id="ffam" onchange="onFont()">
+          <optgroup label="ヒラギノ (macOS標準)">
+            <option value="HiraKakuProN-W6">ヒラギノ角ゴ W6（太）★テロップ定番</option>
+            <option value="HiraKakuProN-W3">ヒラギノ角ゴ W3（細）</option>
+            <option value="HiraKakuStd-W8">ヒラギノ角ゴ Std W8（特太）</option>
             <option value="HiraMinProN-W3">ヒラギノ明朝 W3</option>
             <option value="HiraMinProN-W6">ヒラギノ明朝 W6</option>
           </optgroup>
-          <optgroup label="游書体 (Windows/macOS)">
-            <option value="YuGo-Bold">游ゴシック Bold</option>
-            <option value="YuGo-Medium">游ゴシック Medium</option>
-            <option value="YuMin-Medium">游明朝 Medium</option>
+          <optgroup label="游書体 (Win/Mac共通)">
+            <option value="Yu Gothic">游ゴシック</option>
+            <option value="Yu Gothic Bold">游ゴシック Bold</option>
+            <option value="Yu Mincho">游明朝</option>
           </optgroup>
           <optgroup label="Noto Sans">
-            <option value="NotoSansJP-Bold">Noto Sans JP Bold</option>
-            <option value="NotoSansJP-Regular">Noto Sans JP Regular</option>
+            <option value="Noto Sans JP">Noto Sans JP Regular</option>
+            <option value="Noto Sans JP Bold">Noto Sans JP Bold</option>
           </optgroup>
           <optgroup label="欧文">
             <option value="Arial">Arial</option>
@@ -305,580 +334,909 @@ select option{background:var(--bg0)}
           <option value="__">── カスタム入力 ──</option>
         </select>
       </div>
-      <div class="fr" id="cust-fr" style="display:none">
+      <div class="fr" id="custfr" style="display:none">
         <div class="fl">フォント名（直接入力）</div>
-        <input type="text" id="cust-font" placeholder="例: NotoSansJP-Bold">
+        <input type="text" id="custf" placeholder="例: NotoSansJP-Bold" oninput="drawPreview()">
       </div>
-
       <div class="fr">
-        <div class="fl">フォントサイズ <span id="fs-v">72</span> px</div>
-        <div class="rr"><input type="range" id="fsize" min="12" max="200" value="72">
-          <span class="rv" id="fs-d">72</span></div>
+        <div class="fl">フォントサイズ <span class="fv" id="fszv">72</span> px</div>
+        <div class="rr"><input type="range" id="fsz" min="12" max="200" value="72" oninput="syncR(this,'fszv');drawPreview()">
+          <span class="rv" id="fszd">72</span></div>
       </div>
-
-      <!-- Stroke -->
-      <div class="tog-row">
-        <span class="tog-lbl">🔲 縁取り (Stroke)</span>
-        <label class="tog"><input type="checkbox" id="st-on" checked><span class="tog-sl"></span></label>
-      </div>
-      <div id="st-ctrl">
-        <div class="fr">
-          <div class="fl">縁取りサイズ <span id="sw-v">8</span> px</div>
-          <div class="rr"><input type="range" id="sw" min="0" max="40" value="8">
-            <span class="rv" id="sw-d">8</span></div>
-        </div>
-      </div>
-
-      <!-- Shadow -->
-      <div class="tog-row">
-        <span class="tog-lbl">🌑 シャドウ (Drop Shadow)</span>
-        <label class="tog"><input type="checkbox" id="sh-on"><span class="tog-sl"></span></label>
-      </div>
-      <div id="sh-ctrl" style="display:none">
-        <div class="fr">
-          <div class="fl">不透明度 <span id="so-v">75</span> %</div>
-          <div class="rr"><input type="range" id="sh-op" min="0" max="100" value="75">
-            <span class="rv" id="so-d">75</span></div>
-        </div>
-        <div class="fr">
-          <div class="fl">距離 (Distance) <span id="sd-v">4</span> px</div>
-          <div class="rr"><input type="range" id="sh-d" min="0" max="40" value="4">
-            <span class="rv" id="sd-d">4</span></div>
-        </div>
-        <div class="fr">
-          <div class="fl">角度 (Angle) <span id="sa-v">315</span> °</div>
-          <div class="rr"><input type="range" id="sh-a" min="0" max="360" value="315">
-            <span class="rv" id="sa-d">315</span></div>
-        </div>
-        <div class="fr">
-          <div class="fl">ぼかし (Blur) <span id="sb-v">0</span> px</div>
-          <div class="rr"><input type="range" id="sh-b" min="0" max="30" value="0">
-            <span class="rv" id="sb-d">0</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Preview -->
-    <div class="sec">
-      <div class="sec-title">👁️ プレビュー</div>
       <div class="fr">
-        <input type="text" id="pvtxt" value="サンプルテロップ" placeholder="プレビューテキスト">
+        <div class="fl">文字揃え（Alignment）</div>
+        <div class="aln-row">
+          <button class="aln-btn active" data-a="left"   onclick="setAlign('left')"   title="左揃え">≡<br><small>左</small></button>
+          <button class="aln-btn active" data-a="center" onclick="setAlign('center')" title="中央揃え">☰<br><small>中央</small></button>
+          <button class="aln-btn"        data-a="right"  onclick="setAlign('right')"  title="右揃え">≡<br><small>右</small></button>
+        </div>
       </div>
-      <div class="prev-wrap"><canvas id="prev-canvas" width="364" height="90"></canvas></div>
+      <div class="fr">
+        <div class="fl">スタイル</div>
+        <div class="style-btns">
+          <button class="sty-btn" id="fb" onclick="toggleStyle('fb')" style="font-weight:bold">B 太字</button>
+          <button class="sty-btn" id="fi2" onclick="toggleStyle('fi2')" style="font-style:italic">I 斜体</button>
+          <button class="sty-btn" id="fu" onclick="toggleStyle('fu')" style="text-decoration:underline">U 下線</button>
+          <button class="sty-btn" id="fac" onclick="toggleStyle('fac')">AA 大文字</button>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="fr">
+          <div class="fl">トラッキング <span class="fv" id="trkv">0</span></div>
+          <div class="rr"><input type="range" id="trk" min="-200" max="400" value="0" oninput="syncR(this,'trkv');drawPreview()">
+            <span class="rv" id="trkd">0</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">行間 <span class="fv" id="ldgv">1.2</span></div>
+          <div class="rr"><input type="range" id="ldg" min="80" max="250" value="120" oninput="syncRf(this,'ldgv',0.01);drawPreview()">
+            <span class="rv" id="ldgd">1.2</span></div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Export -->
-    <div class="sec">
-      <div class="sec-title">💾 書き出し</div>
-      <button class="ebtn eb-primary" id="ex-prtextstyle">
-        📦 .prtextstyle として保存 (Premiere Pro)
-      </button>
-      <button class="ebtn eb-sec" id="ex-jsx">
-        📜 ExtendScript (.jsx) として保存
-      </button>
-      <button class="ebtn eb-sec" id="ex-report">
-        📄 解析レポート (.txt) として保存
-      </button>
-      <p class="tip">
-        .prtextstyle → Essential Graphics パネル > テキストスタイル > スタイルをインポート<br>
-        .jsx → Premiere Pro > ファイル > スクリプト > スクリプトファイルを実行...
-      </p>
+<!-- ── Section: 塗り (Fill) ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <label class="tog-mini" onclick="e=>e.stopPropagation()"><input type="checkbox" id="fill-en" checked onchange="drawPreview()"><span class="tm-sl"></span></label>
+    <span class="acc-title">🎨 塗り（Fill）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body open">
+    <div class="acc-inner">
+      <div class="fr">
+        <div class="fl">塗りタイプ</div>
+        <div class="ft-tabs">
+          <button class="ft-tab active" onclick="setFillType('solid')">単色</button>
+          <button class="ft-tab" onclick="setFillType('grad-v')">グラデ（縦）</button>
+          <button class="ft-tab" onclick="setFillType('grad-h')">グラデ（横）</button>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fl">塗り色 <span class="fv" id="fop-v">100</span>%</div>
+        <div class="rr"><input type="range" id="fop" min="0" max="100" value="100" oninput="syncR(this,'fop-v');drawPreview()">
+          <span class="rv" id="fop-d">100</span></div>
+      </div>
+      <div class="grad-box" id="grad-box">
+        <div class="fl" style="margin-bottom:6px">グラデーション設定</div>
+        <div style="font-size:10px;color:var(--dim);margin-bottom:6px">
+          色1:「カラー解析」の文字色 → 色2:「文字色2（グラデ用）」を使用
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-  </div><!-- /right -->
+<!-- ── Section: 縁取り1 ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <label class="tog-mini" onclick="e=>e.stopPropagation()"><input type="checkbox" id="st1-en" checked onchange="drawPreview()"><span class="tm-sl"></span></label>
+    <span class="acc-title">🔲 縁取り 1（内側・メイン縁）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body open">
+    <div class="acc-inner">
+      <div class="fr">
+        <div class="fl">縁取り幅 <span class="fv" id="s1w-v">8</span> px</div>
+        <div class="rr"><input type="range" id="s1w" min="0" max="60" value="8" oninput="syncR(this,'s1w-v');drawPreview()">
+          <span class="rv" id="s1w-d">8</span></div>
+      </div>
+      <div class="fr">
+        <div class="fl">不透明度 <span class="fv" id="s1o-v">100</span> %</div>
+        <div class="rr"><input type="range" id="s1o" min="0" max="100" value="100" oninput="syncR(this,'s1o-v');drawPreview()">
+          <span class="rv" id="s1o-d">100</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Section: 縁取り2 ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <label class="tog-mini" onclick="e=>e.stopPropagation()"><input type="checkbox" id="st2-en" onchange="drawPreview()"><span class="tm-sl"></span></label>
+    <span class="acc-title">🔲 縁取り 2（外側・二重縁）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body">
+    <div class="acc-inner">
+      <p class="tip" style="margin-bottom:8px">二重縁取り: 縁取り1の外側にさらに縁を追加。テレビ番組の高品質テロップに多用。</p>
+      <div class="fr">
+        <div class="fl">外縁幅 <span class="fv" id="s2w-v">6</span> px</div>
+        <div class="rr"><input type="range" id="s2w" min="0" max="60" value="6" oninput="syncR(this,'s2w-v');drawPreview()">
+          <span class="rv" id="s2w-d">6</span></div>
+      </div>
+      <div class="fr">
+        <div class="fl">不透明度 <span class="fv" id="s2o-v">100</span> %</div>
+        <div class="rr"><input type="range" id="s2o" min="0" max="100" value="100" oninput="syncR(this,'s2o-v');drawPreview()">
+          <span class="rv" id="s2o-d">100</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Section: シャドウ ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <label class="tog-mini" onclick="e=>e.stopPropagation()"><input type="checkbox" id="sh-en" onchange="shToggle()"><span class="tm-sl"></span></label>
+    <span class="acc-title">🌑 シャドウ（Drop Shadow）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body">
+    <div class="acc-inner">
+      <div class="two-col">
+        <div class="fr">
+          <div class="fl">不透明度 <span class="fv" id="sho-v">75</span>%</div>
+          <div class="rr"><input type="range" id="sh-op" min="0" max="100" value="75" oninput="syncR(this,'sho-v');drawPreview()">
+            <span class="rv" id="sho-d">75</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">ぼかし <span class="fv" id="shb-v">0</span>px</div>
+          <div class="rr"><input type="range" id="sh-bl" min="0" max="40" value="0" oninput="syncR(this,'shb-v');drawPreview()">
+            <span class="rv" id="shb-d">0</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">距離 <span class="fv" id="shd-v">4</span>px</div>
+          <div class="rr"><input type="range" id="sh-ds" min="0" max="60" value="4" oninput="syncR(this,'shd-v');drawPreview()">
+            <span class="rv" id="shd-d">4</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">角度 <span class="fv" id="sha-v">315</span>°</div>
+          <div class="rr"><input type="range" id="sh-an" min="0" max="360" value="315" oninput="syncR(this,'sha-v');drawPreview()">
+            <span class="rv" id="sha-d">315</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Section: 背景ボックス ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <label class="tog-mini" onclick="e=>e.stopPropagation()"><input type="checkbox" id="bx-en" onchange="drawPreview()"><span class="tm-sl"></span></label>
+    <span class="acc-title">▭ 背景ボックス（ニューステロップ等）</span>
+    <span class="acc-arrow">▼</span>
+  </div>
+  <div class="acc-body">
+    <div class="acc-inner">
+      <div class="fr">
+        <div class="fl">不透明度 <span class="fv" id="bxo-v">100</span>%</div>
+        <div class="rr"><input type="range" id="bx-op" min="0" max="100" value="100" oninput="syncR(this,'bxo-v');drawPreview()">
+          <span class="rv" id="bxo-d">100</span></div>
+      </div>
+      <div class="two-col">
+        <div class="fr">
+          <div class="fl">パディング 上 <span class="fv" id="bxpt-v">10</span>px</div>
+          <div class="rr"><input type="range" id="bx-pt" min="0" max="60" value="10" oninput="syncR(this,'bxpt-v');drawPreview()">
+            <span class="rv" id="bxpt-d">10</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">パディング 下 <span class="fv" id="bxpb-v">10</span>px</div>
+          <div class="rr"><input type="range" id="bx-pb" min="0" max="60" value="10" oninput="syncR(this,'bxpb-v');drawPreview()">
+            <span class="rv" id="bxpb-d">10</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">パディング 左 <span class="fv" id="bxpl-v">20</span>px</div>
+          <div class="rr"><input type="range" id="bx-pl" min="0" max="80" value="20" oninput="syncR(this,'bxpl-v');drawPreview()">
+            <span class="rv" id="bxpl-d">20</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">パディング 右 <span class="fv" id="bxpr-v">20</span>px</div>
+          <div class="rr"><input type="range" id="bx-pr" min="0" max="80" value="20" oninput="syncR(this,'bxpr-v');drawPreview()">
+            <span class="rv" id="bxpr-d">20</span></div>
+        </div>
+      </div>
+      <div class="fr">
+        <div class="fl">角丸 <span class="fv" id="bxr-v">0</span>px</div>
+        <div class="rr"><input type="range" id="bx-r" min="0" max="50" value="0" oninput="syncR(this,'bxr-v');drawPreview()">
+          <span class="rv" id="bxr-d">0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Preview ── -->
+<div class="acc">
+  <div class="acc-h" onclick="toggleAcc(this)">
+    <span class="acc-title">👁️ プレビュー</span>
+    <span class="acc-arrow">▲</span>
+  </div>
+  <div class="acc-body open">
+    <div class="acc-inner">
+      <div class="fr">
+        <input type="text" id="pvtxt" value="サンプルテロップ" placeholder="プレビューテキスト" oninput="drawPreview()">
+      </div>
+      <div class="prev-wrap"><canvas id="pc"></canvas></div>
+      <div class="prev-bg-row">
+        <label>背景:</label>
+        <div class="bg-chip sel" style="background:#111" onclick="setPrevBg('#111',this)" title="黒"></div>
+        <div class="bg-chip" style="background:#fff" onclick="setPrevBg('#fff',this)" title="白"></div>
+        <div class="bg-chip" style="background:#404060" onclick="setPrevBg('#404060',this)" title="暗青"></div>
+        <div class="bg-chip" style="background:#1e6030" onclick="setPrevBg('#1e6030',this)" title="暗緑"></div>
+        <div class="bg-chip" style="background:conic-gradient(#333 90deg,#555 90deg 180deg,#333 180deg 270deg,#555 270deg) 0/10px 10px" onclick="setPrevBg('transparent',this)" title="透過"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Export ── -->
+<div style="padding:14px 16px">
+  <button class="eb eb-pri" onclick="exportFile('prtextstyle')">📦 .prtextstyle として保存</button>
+  <button class="eb eb-sec" onclick="exportFile('jsx')">📜 ExtendScript (.jsx) として保存</button>
+  <button class="eb eb-sec" onclick="exportFile('report')">📄 解析レポート (.txt) として保存</button>
+  <p class="tip">
+    .prtextstyle: Essential Graphics > テキストスタイル > パネルメニュー(≡) > スタイルをインポート<br>
+    ファイル名は上部の「ファイル名」欄で設定できます
+  </p>
+</div>
+
+</div><!-- /right -->
 </div><!-- /layout -->
 
-<!-- Magnifier -->
-<div id="magnifier" style="width:80px;height:80px"></div>
-<div id="mag-label"></div>
+<div id="magnifier"></div>
+<div id="mag-lbl"></div>
 
 <script>
 'use strict';
-
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 // State
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 const S = {
   mode: 'fill',
+  align: 'center',
+  fillType: 'solid',
+  prevBg: '#111',
   colors: {
-    fill:   {r:255,g:255,b:255,a:255,set:false},
-    stroke: {r:0,  g:0,  b:0,  a:255,set:false},
-    shadow: {r:0,  g:0,  b:0,  a:255,set:false},
-    bg:     {r:30, g:30, b:30, a:255,set:false}
+    fill:    {r:255,g:255,b:255},
+    fill2:   {r:204,g:204,b:204},
+    stroke1: {r:0,  g:0,  b:0  },
+    stroke2: {r:255,g:255,b:255},
+    shadow:  {r:0,  g:0,  b:0  },
+    box:     {r:0,  g:60, b:160}
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// DOM
-// ─────────────────────────────────────────────────────────────
-const dz  = id('dz');
-const fi  = id('fi');
-const ca  = id('ca');
-const mb  = id('mb');
-const ic  = id('img-canvas');
-const ctx = ic.getContext('2d');
-const pc  = id('prev-canvas');
-const pctx= pc.getContext('2d');
-const mag = id('magnifier');
-const mgl = id('mag-label');
-const magCtx = document.createElement('canvas').getContext('2d');
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const num = id => parseInt($(id).value);
+const numf = id => parseFloat($(id).value);
+const chk = id => $(id).checked;
+const val = id => $(id).value;
 
-function id(x){return document.getElementById(x)}
+function toHex(r,g,b){return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase()}
+function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)}}
+function luma(r,g,b){return .299*r+.587*g+.114*b}
 
-// ─────────────────────────────────────────────────────────────
-// Upload / Drag-drop
-// ─────────────────────────────────────────────────────────────
-dz.addEventListener('click', ()=>fi.click());
-fi.addEventListener('change', e=>loadImg(e.target.files[0]));
-dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over')});
-dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
-dz.addEventListener('drop', e=>{
-  e.preventDefault();dz.classList.remove('over');
-  const f=e.dataTransfer.files[0];
-  if(f&&f.type.startsWith('image/'))loadImg(f);
-});
+function syncR(el,vid){$(vid).textContent=el.value;el.nextElementSibling.textContent=el.value}
+function syncRf(el,vid,mul){const v=(parseInt(el.value)*mul).toFixed(2);$(vid).textContent=v;el.nextElementSibling.textContent=v}
 
-// Paste support
-document.addEventListener('paste', e=>{
-  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
-  if(item) loadImg(item.getAsFile());
-});
+function getFont(){const v=val('ffam');return v==='__'?val('custf')||'sans-serif':v}
+
+// ─────────────────────────────────────────────
+// Upload
+// ─────────────────────────────────────────────
+const dz=$('dz'),fi=$('fi'),ca=$('ca'),mb=$('mb');
+const ic=$('ic'),ctx=ic.getContext('2d');
+const mag=$('magnifier'),mgl=$('mag-lbl');
+const magC=document.createElement('canvas');
+magC.width=magC.height=80;
+const magX=magC.getContext('2d');
+
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>loadImg(e.target.files[0]));
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');
+  const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadImg(f)});
+document.addEventListener('paste',e=>{
+  const item=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(item)loadImg(item.getAsFile())});
 
 function loadImg(file){
   if(!file)return;
-  const url = URL.createObjectURL(file);
-  const img = new Image();
-  img.onload = ()=>{
-    // fit to canvas area
-    const maxW = ca.clientWidth  || window.innerWidth*0.6;
-    const maxH = (window.innerHeight - 55 - 44);
-    const sc   = Math.min(maxW/img.width, maxH/img.height, 1);
-    ic.width   = Math.round(img.width*sc);
-    ic.height  = Math.round(img.height*sc);
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    const maxW=ca.clientWidth||800,maxH=window.innerHeight-120;
+    const sc=Math.min(maxW/img.width,maxH/img.height,1);
+    ic.width=Math.round(img.width*sc);ic.height=Math.round(img.height*sc);
     ctx.drawImage(img,0,0,ic.width,ic.height);
-    S._img = img; S._sc = sc;
-    // magnifier canvas size
-    magCtx.canvas.width = magCtx.canvas.height = 80;
-
-    dz.style.display='none';
-    ca.style.display='block';
-    mb.style.display='flex';
-    id('abtn').disabled=false;
-    autoAnalyze();
+    S._img=img;S._sc=sc;
+    dz.style.display='none';ca.style.display='block';mb.style.display='flex';
+    $('abtn').disabled=false;
     URL.revokeObjectURL(url);
-  };
-  img.src=url;
+    autoAnalyze();
+  };img.src=url;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Canvas interaction: click to sample
-// ─────────────────────────────────────────────────────────────
-ic.addEventListener('click', e=>{
-  const {x,y} = canvasXY(e);
-  const px = ctx.getImageData(x,y,1,1).data;
-  setColor(S.mode, px[0],px[1],px[2],px[3]);
-  drawPreview();
-});
-
-// Hover: magnifier
-ic.addEventListener('mousemove', e=>{
-  const rect = ic.getBoundingClientRect();
-  const cx = e.clientX - rect.left;
-  const cy = e.clientY - rect.top;
-  const xi = Math.round(cx*(ic.width/rect.width));
-  const yi = Math.round(cy*(ic.height/rect.height));
-  const px = ctx.getImageData(Math.max(0,xi),Math.max(0,yi),1,1).data;
-  const hex= toHex(px[0],px[1],px[2]);
-
-  // cursor color display
-  id('cur-swatch').style.background=hex;
-  id('cur-hex').textContent=hex;
-
-  // magnifier position
-  const mx = e.clientX+16, my = e.clientY-40;
-  mag.style.display='block';
-  mgl.style.display='block';
-  mag.style.left   = mx+'px';
-  mag.style.top    = my+'px';
-  mgl.style.left   = mx+'px';
-  mgl.style.top    = (my+85)+'px';
-  mgl.textContent  = hex+`  R:${px[0]} G:${px[1]} B:${px[2]}`;
-
-  // draw magnified region
-  const zoom = 6;
-  const half = 40/zoom;
-  magCtx.clearRect(0,0,80,80);
-  magCtx.imageSmoothingEnabled=false;
-  magCtx.drawImage(ic,
-    Math.max(0,xi-half), Math.max(0,yi-half), half*2, half*2,
-    0, 0, 80, 80);
-  // crosshair
-  magCtx.strokeStyle='rgba(255,255,255,0.8)';
-  magCtx.lineWidth=1;
-  magCtx.beginPath();magCtx.moveTo(40,0);magCtx.lineTo(40,80);magCtx.stroke();
-  magCtx.beginPath();magCtx.moveTo(0,40);magCtx.lineTo(80,40);magCtx.stroke();
-
-  // Apply magnifier image
-  mag.style.backgroundImage=`url(${magCtx.canvas.toDataURL()})`;
-  mag.style.backgroundSize='80px 80px';
-});
-
-ic.addEventListener('mouseleave', ()=>{
-  mag.style.display='none';
-  mgl.style.display='none';
-  id('cur-hex').textContent='—';
-  id('cur-swatch').style.background='transparent';
-});
-
-function canvasXY(e){
+// ─────────────────────────────────────────────
+// Canvas sampling
+// ─────────────────────────────────────────────
+ic.addEventListener('click',e=>{
   const rect=ic.getBoundingClientRect();
-  return {
-    x:Math.round((e.clientX-rect.left)*(ic.width/rect.width)),
-    y:Math.round((e.clientY-rect.top) *(ic.height/rect.height))
-  };
-}
-
-// ─────────────────────────────────────────────────────────────
-// Sampling mode buttons
-// ─────────────────────────────────────────────────────────────
-document.querySelectorAll('.mbtn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    setActiveMode(btn.dataset.m);
-  });
+  const x=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
+  const y=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
+  const px=ctx.getImageData(x,y,1,1).data;
+  setColor(S.mode,px[0],px[1],px[2]);drawPreview();
 });
 
-// Color row click → activate mode
-document.querySelectorAll('.cr').forEach(row=>{
-  row.addEventListener('click', ()=>{
-    const m=row.dataset.m;
-    document.querySelectorAll('.cr').forEach(r=>r.classList.remove('active-row'));
-    row.classList.add('active-row');
-    setActiveMode(m);
-  });
+ic.addEventListener('mousemove',e=>{
+  const rect=ic.getBoundingClientRect();
+  const xi=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
+  const yi=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
+  const px=ctx.getImageData(Math.max(0,xi),Math.max(0,yi),1,1).data;
+  const hex=toHex(px[0],px[1],px[2]);
+  $('csw').style.background=hex;$('chx').textContent=hex;
+  // magnifier
+  const mx=e.clientX+18,my=e.clientY-50;
+  mag.style.cssText=`display:block;left:${mx}px;top:${my}px;position:fixed;width:80px;height:80px;border-radius:50%;border:2px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.9);pointer-events:none;z-index:999`;
+  mgl.style.cssText=`display:block;left:${mx}px;top:${my+84}px;position:fixed;background:rgba(0,0,0,.88);color:#fff;padding:2px 7px;border-radius:5px;font-size:10px;font-family:monospace;pointer-events:none;z-index:999;white-space:nowrap`;
+  mgl.textContent=`${hex}  R:${px[0]} G:${px[1]} B:${px[2]}`;
+  magX.clearRect(0,0,80,80);magX.imageSmoothingEnabled=false;
+  const half=7;
+  magX.drawImage(ic,Math.max(0,xi-half),Math.max(0,yi-half),half*2,half*2,0,0,80,80);
+  magX.strokeStyle='rgba(255,255,255,.8)';magX.lineWidth=1;
+  magX.beginPath();magX.moveTo(40,0);magX.lineTo(40,80);magX.stroke();
+  magX.beginPath();magX.moveTo(0,40);magX.lineTo(80,40);magX.stroke();
+  mag.style.background=`url(${magC.toDataURL()}) 0/80px 80px`;
 });
+ic.addEventListener('mouseleave',()=>{mag.style.display='none';mgl.style.display='none'});
 
-function setActiveMode(m){
+// Mode buttons
+document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');setMode(b.dataset.m);
+}));
+
+// Color row click
+document.querySelectorAll('.cr').forEach(r=>r.addEventListener('click',()=>{
+  document.querySelectorAll('.cr').forEach(x=>x.classList.remove('active-cr'));
+  r.classList.add('active-cr');setMode(r.dataset.m);
+}));
+
+function setMode(m){
   S.mode=m;
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
-  document.querySelectorAll('.cr').forEach(r=>r.classList.toggle('active-row',r.dataset.m===m));
+  document.querySelectorAll('.cr').forEach(r=>r.classList.toggle('active-cr',r.dataset.m===m));
 }
 
-// ─────────────────────────────────────────────────────────────
-// Color management
-// ─────────────────────────────────────────────────────────────
-function toHex(r,g,b){
-  return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-function hexToRgb(hex){
-  return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};
-}
-function luma(r,g,b){return 0.299*r+0.587*g+0.114*b}
-
-function setColor(m,r,g,b,a=255){
-  const c=S.colors[m];
-  c.r=r;c.g=g;c.b=b;c.a=a;c.set=true;
+// ─────────────────────────────────────────────
+// Colors
+// ─────────────────────────────────────────────
+function setColor(m,r,g,b){
+  S.colors[m]={r,g,b};
   const hex=toHex(r,g,b);
-  id('sw-'+m).style.background=hex;
-  id('hx-'+m).textContent=hex;
-  id('rb-'+m).textContent=`R:${r}  G:${g}  B:${b}`;
-  id('cp-'+m).value=hex;
+  $('sw-'+m).style.background=hex;
+  $('hx-'+m).textContent=hex;
+  $('rb-'+m).textContent=`R:${r} G:${g} B:${b}`;
+  $('cp-'+m).value=hex;
 }
-
-// Color picker inputs
-['fill','stroke','shadow','bg'].forEach(m=>{
-  id('cp-'+m).addEventListener('input',e=>{
-    const {r,g,b}=hexToRgb(e.target.value);
-    setColor(m,r,g,b);
-    drawPreview();
-  });
+function onCp(m,h){const c=hexToRgb(h);setColor(m,c.r,c.g,c.b);drawPreview()}
+// init display
+['fill','fill2','stroke1','stroke2','shadow','box'].forEach(m=>{
+  const c=S.colors[m];setColor(m,c.r,c.g,c.b);
 });
 
-// ─────────────────────────────────────────────────────────────
-// Auto dominant color analysis
-// ─────────────────────────────────────────────────────────────
-id('abtn').addEventListener('click', autoAnalyze);
-
+// ─────────────────────────────────────────────
+// Auto analyze
+// ─────────────────────────────────────────────
 function autoAnalyze(){
   if(!S._img)return;
-  const data = ctx.getImageData(0,0,ic.width,ic.height).data;
-  const step = Math.max(1,Math.floor(data.length/4/3000));
-  const pts  = [];
-  for(let i=0;i<data.length;i+=4*step){
-    if(data[i+3]<128)continue;
-    pts.push([data[i],data[i+1],data[i+2]]);
-  }
-  const clusters = quantCluster(pts,10);
-
-  // Display palette
-  const pal = id('palette');
-  pal.innerHTML='';
+  const d=ctx.getImageData(0,0,ic.width,ic.height).data;
+  const step=Math.max(1,Math.floor(d.length/4/3000));
+  const pts=[];
+  for(let i=0;i<d.length;i+=4*step){if(d[i+3]<128)continue;pts.push([d[i],d[i+1],d[i+2]])}
+  const clusters=qCluster(pts,10);
+  const pal=$('pal');pal.innerHTML='';
   clusters.forEach(c=>{
     const hex=toHex(c[0],c[1],c[2]);
     const chip=document.createElement('div');
-    chip.className='chip';
-    chip.style.background=hex;
+    chip.className='chip';chip.style.background=hex;chip.title=hex;
     chip.innerHTML=`<span class="chip-tip">${hex}</span>`;
-    chip.title=hex;
-    chip.addEventListener('click',()=>{
-      const {r,g,b}=hexToRgb(hex);
-      setColor(S.mode,r,g,b);
-      drawPreview();
-    });
+    chip.addEventListener('click',()=>{const rgb=hexToRgb(hex);setColor(S.mode,rgb.r,rgb.g,rgb.b);drawPreview()});
     pal.appendChild(chip);
   });
-
-  // Smart auto-assign
-  if(!S.colors.fill.set && clusters.length>0){
-    const bright = [...clusters].sort((a,b)=>luma(...b)-luma(...a))[0];
-    setColor('fill',bright[0],bright[1],bright[2]);
+  if(clusters.length>0){
+    const byLuma=[...clusters].sort((a,b)=>luma(...b)-luma(...a));
+    setColor('fill',byLuma[0][0],byLuma[0][1],byLuma[0][2]);
+    if(byLuma.length>1)setColor('stroke1',byLuma[byLuma.length-1][0],byLuma[byLuma.length-1][1],byLuma[byLuma.length-1][2]);
+    if(byLuma.length>2)setColor('box',byLuma[byLuma.length-2][0],byLuma[byLuma.length-2][1],byLuma[byLuma.length-2][2]);
+    drawPreview();
   }
-  if(!S.colors.stroke.set && clusters.length>1){
-    const dark = [...clusters].sort((a,b)=>luma(...a)-luma(...b))[0];
-    setColor('stroke',dark[0],dark[1],dark[2]);
-  }
-  if(!S.colors.bg.set && clusters.length>2){
-    // pick most frequent dark-ish color for bg
-    const bgCluster = [...clusters].sort((a,b)=>luma(...a)-luma(...b))[1]||clusters[clusters.length-1];
-    setColor('bg',bgCluster[0],bgCluster[1],bgCluster[2]);
-  }
-  drawPreview();
 }
 
-function quantCluster(pts, k){
+function qCluster(pts,k){
   if(!pts.length)return[];
-  // Quantize
   const q={};
   pts.forEach(([r,g,b])=>{
     const key=`${r>>2},${g>>2},${b>>2}`;
-    q[key]=(q[key]||{c:0,r:0,g:0,b:0});
+    if(!q[key])q[key]={c:0,r:0,g:0,b:0};
     q[key].c++;q[key].r+=r;q[key].g+=g;q[key].b+=b;
   });
   const sorted=Object.values(q).sort((a,b)=>b.c-a.c);
-  const centroids=[];
+  const cents=[];
   for(const e of sorted){
-    if(centroids.length>=k)break;
+    if(cents.length>=k)break;
     const r=Math.round(e.r/e.c),g=Math.round(e.g/e.c),b=Math.round(e.b/e.c);
-    const tooClose=centroids.some(c=>Math.hypot(c[0]-r,c[1]-g,c[2]-b)<35);
-    if(!tooClose)centroids.push([r,g,b]);
+    if(!cents.some(c=>Math.hypot(c[0]-r,c[1]-g,c[2]-b)<35))cents.push([r,g,b]);
   }
-  return centroids;
+  return cents;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Controls binding
-// ─────────────────────────────────────────────────────────────
-function bindRange(slId,dispId,valId){
-  const sl=id(slId),dp=id(dispId),vl=id(valId);
-  sl.addEventListener('input',()=>{dp.textContent=sl.value;if(vl)vl.textContent=sl.value;drawPreview()});
+// ─────────────────────────────────────────────
+// UI controls
+// ─────────────────────────────────────────────
+function toggleAcc(h){
+  const body=h.nextElementSibling,arrow=h.querySelector('.acc-arrow');
+  body.classList.toggle('open');arrow.textContent=body.classList.contains('open')?'▲':'▼';
 }
-bindRange('fsize','fs-d','fs-v');
-bindRange('sw','sw-d','sw-v');
-bindRange('sh-op','so-d','so-v');
-bindRange('sh-d','sd-d','sd-v');
-bindRange('sh-a','sa-d','sa-v');
-bindRange('sh-b','sb-d','sb-v');
+function setAlign(a){
+  S.align=a;
+  document.querySelectorAll('.aln-btn').forEach(b=>b.classList.toggle('active',b.dataset.a===a));
+  drawPreview();
+}
+function toggleStyle(id){$(id).classList.toggle('active');drawPreview()}
+function shToggle(){$('sh-ctrl')&&($('sh-ctrl').style.display=chk('sh-en')?'block':'none');drawPreview()}
+function setFillType(t){
+  S.fillType=t;
+  document.querySelectorAll('.ft-tab').forEach((b,i)=>b.classList.toggle('active',[
+    'solid','grad-v','grad-h'].indexOf(t)===i));
+  $('grad-box').classList.toggle('show',t!=='solid');
+  drawPreview();
+}
+function setPrevBg(color,el){
+  S.prevBg=color;
+  document.querySelectorAll('.bg-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');drawPreview();
+}
+$('ffam').addEventListener('change',()=>{$('custfr').style.display=$('ffam').value==='__'?'':'none';drawPreview()});
 
-id('st-on').addEventListener('change',e=>{
-  id('st-ctrl').style.display=e.target.checked?'':'none';drawPreview();});
-id('sh-on').addEventListener('change',e=>{
-  id('sh-ctrl').style.display=e.target.checked?'block':'none';drawPreview();});
-id('ffam').addEventListener('change',e=>{
-  id('cust-fr').style.display=e.target.value==='__'?'':'none';drawPreview();});
-id('pvtxt').addEventListener('input',drawPreview);
-id('cust-font').addEventListener('input',drawPreview);
+// Initial alignment button state
+setAlign('center');
 
-// ─────────────────────────────────────────────────────────────
-// Preview canvas
-// ─────────────────────────────────────────────────────────────
-function getFont(){
-  const v=id('ffam').value;
-  return v==='__'?id('cust-font').value||'sans-serif':v;
+// ─────────────────────────────────────────────
+// Preview rendering
+// ─────────────────────────────────────────────
+const pc=$('pc'),pctx=pc.getContext('2d');
+const DPR=window.devicePixelRatio||2;
+
+function roundRect(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
 }
 
 function drawPreview(){
-  const text = id('pvtxt').value||'テロップ';
-  const fill = S.colors.fill;
-  const stk  = S.colors.stroke;
-  const shd  = S.colors.shadow;
-  const bg   = S.colors.bg;
-  const sz   = parseInt(id('fsize').value);
-  const font = getFont();
-  const sw   = parseInt(id('sw').value);
-  const stOn = id('st-on').checked;
-  const shOn = id('sh-on').checked;
-  const shOp = parseInt(id('sh-op').value)/100;
-  const shD  = parseInt(id('sh-d').value);
-  const shA  = parseInt(id('sh-a').value);
-  const shB  = parseInt(id('sh-b').value);
+  const text=val('pvtxt')||'テロップ';
+  const font=getFont();
+  const size=num('fsz');
+  const bold=$('fb').classList.contains('active');
+  const italic=$('fi2').classList.contains('active');
+  const underline=$('fu').classList.contains('active');
+  const allcaps=$('fac').classList.contains('active');
+  const tracking=num('trk');
+  const displayText=allcaps?text.toUpperCase():text;
 
-  const DPR=2,cw=364,ch=90;
-  pc.width=cw*DPR;pc.height=ch*DPR;
-  pc.style.width=cw+'px';pc.style.height=ch+'px';
+  const fillEn=chk('fill-en');
+  const fillOp=num('fop')/100;
+  const st1En=chk('st1-en');
+  const st1W=num('s1w'),st1O=num('s1o')/100;
+  const st2En=chk('st2-en');
+  const st2W=num('s2w'),st2O=num('s2o')/100;
+  const shEn=chk('sh-en');
+  const shOp=num('sh-op')/100,shBl=num('sh-bl'),shDs=num('sh-ds'),shAn=num('sh-an');
+  const bxEn=chk('bx-en');
+  const bxOp=num('bx-op')/100;
+  const bxPt=num('bx-pt'),bxPb=num('bx-pb'),bxPl=num('bx-pl'),bxPr=num('bx-pr'),bxR=num('bx-r');
+
+  const fc=S.colors.fill,fc2=S.colors.fill2;
+  const s1c=S.colors.stroke1,s2c=S.colors.stroke2;
+  const shc=S.colors.shadow,bxc=S.colors.box;
+
+  const CW=pc.clientWidth||408,CH=150;
+  pc.width=CW*DPR;pc.height=CH*DPR;
+  pc.style.width=CW+'px';pc.style.height=CH+'px';
   pctx.setTransform(DPR,0,0,DPR,0,0);
 
-  // bg
-  pctx.fillStyle=bg.set?`rgb(${bg.r},${bg.g},${bg.b})`:'#1a1a1a';
-  pctx.fillRect(0,0,cw,ch);
-
-  const fontSize=Math.min(sz,54);
-  pctx.font=`bold ${fontSize}px "${font}"`;
-  pctx.textAlign='center';
-  pctx.textBaseline='middle';
-  const tx=cw/2,ty=ch/2;
-
-  // shadow first
-  if(shOn){
-    const rad=(shA-90)*Math.PI/180;
-    pctx.shadowColor=`rgba(${shd.r},${shd.g},${shd.b},${shOp})`;
-    pctx.shadowBlur=shB;
-    pctx.shadowOffsetX=Math.cos(rad)*shD;
-    pctx.shadowOffsetY=Math.sin(rad)*shD;
+  // Background
+  if(S.prevBg==='transparent'){
+    pctx.clearRect(0,0,CW,CH);
+    // checkerboard
+    for(let cx=0;cx<CW;cx+=10)for(let cy=0;cy<CH;cy+=10){
+      pctx.fillStyle=((cx/10+cy/10)%2===0)?'#333':'#444';
+      pctx.fillRect(cx,cy,10,10);
+    }
   } else {
-    pctx.shadowColor='transparent';pctx.shadowBlur=0;
-    pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
+    pctx.fillStyle=S.prevBg;pctx.fillRect(0,0,CW,CH);
   }
 
-  // stroke
-  if(stOn&&sw>0){
-    pctx.strokeStyle=`rgb(${stk.r},${stk.g},${stk.b})`;
-    pctx.lineWidth=Math.min(sw,24)*2;
-    pctx.lineJoin='round';
-    pctx.strokeText(text,tx,ty);
-    pctx.shadowColor='transparent';
-    pctx.shadowBlur=0;pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
+  // Font
+  const dispSz=Math.min(size,80);
+  const fw=bold?'bold':'normal',fi=italic?'italic ':'';
+  pctx.font=`${fi}${fw} ${dispSz}px "${font}"`;
+  pctx.textBaseline='middle';pctx.textAlign=S.align;
+
+  if('letterSpacing' in pctx)pctx.letterSpacing=(tracking/1000*dispSz).toFixed(1)+'px';
+
+  const tx=S.align==='left'?bxPl+8:S.align==='right'?CW-bxPr-8:CW/2;
+  const ty=CH/2;
+
+  // Measure
+  const met=pctx.measureText(displayText);
+  const tw=met.width;
+  const tasc=met.actualBoundingBoxAscent||dispSz*0.8;
+  const tdesc=met.actualBoundingBoxDescent||dispSz*0.2;
+  const th=tasc+tdesc;
+  const ox=S.align==='center'?tx-tw/2:S.align==='right'?tx-tw:tx;
+
+  // Background box
+  if(bxEn){
+    const bx=ox-bxPl,by=ty-tasc-bxPt,bw=tw+bxPl+bxPr,bh=th+bxPt+bxPb;
+    pctx.save();pctx.globalAlpha=bxOp;
+    pctx.fillStyle=`rgb(${bxc.r},${bxc.g},${bxc.b})`;
+    roundRect(pctx,bx,by,bw,bh,bxR);pctx.fill();pctx.restore();
   }
 
-  // fill
-  pctx.fillStyle=`rgb(${fill.r},${fill.g},${fill.b})`;
-  pctx.shadowColor='transparent';pctx.shadowBlur=0;
-  pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
-  pctx.fillText(text,tx,ty);
+  function clearShadow(){pctx.shadowColor='transparent';pctx.shadowBlur=0;pctx.shadowOffsetX=0;pctx.shadowOffsetY=0}
+
+  // Shadow on outermost layer
+  if(shEn){
+    const rad=(shAn-90)*Math.PI/180;
+    pctx.shadowColor=`rgba(${shc.r},${shc.g},${shc.b},${shOp})`;
+    pctx.shadowBlur=shBl;
+    pctx.shadowOffsetX=Math.cos(rad)*shDs;
+    pctx.shadowOffsetY=Math.sin(rad)*shDs;
+  }
+
+  // Stroke 2 (outer - drawn with combined width)
+  if(st2En&&st2W>0){
+    pctx.save();pctx.globalAlpha=st2O;
+    pctx.strokeStyle=`rgb(${s2c.r},${s2c.g},${s2c.b})`;
+    pctx.lineWidth=(st1En?st1W+st2W:st2W)*2;
+    pctx.lineJoin='round';pctx.strokeText(displayText,tx,ty);
+    pctx.restore();clearShadow();
+  }
+
+  // Stroke 1 (inner)
+  if(st1En&&st1W>0){
+    pctx.save();pctx.globalAlpha=st1O;
+    pctx.strokeStyle=`rgb(${s1c.r},${s1c.g},${s1c.b})`;
+    pctx.lineWidth=st1W*2;pctx.lineJoin='round';
+    if(!st2En){}// shadow already on, clear after
+    pctx.strokeText(displayText,tx,ty);
+    pctx.restore();clearShadow();
+  }
+
+  // Fill
+  if(fillEn){
+    pctx.save();pctx.globalAlpha=fillOp;
+    if(S.fillType==='solid'){
+      pctx.fillStyle=`rgb(${fc.r},${fc.g},${fc.b})`;
+    } else {
+      const isV=S.fillType==='grad-v';
+      const grad=isV
+        ?pctx.createLinearGradient(tx,ty-tasc,tx,ty+tdesc)
+        :pctx.createLinearGradient(ox,ty,ox+tw,ty);
+      grad.addColorStop(0,`rgb(${fc.r},${fc.g},${fc.b})`);
+      grad.addColorStop(1,`rgb(${fc2.r},${fc2.g},${fc2.b})`);
+      pctx.fillStyle=grad;
+    }
+    clearShadow();
+    pctx.fillText(displayText,tx,ty);
+    // underline
+    if(underline){
+      pctx.strokeStyle=pctx.fillStyle;pctx.lineWidth=Math.max(1,dispSz/20);
+      pctx.beginPath();pctx.moveTo(ox,ty+tdesc+2);pctx.lineTo(ox+tw,ty+tdesc+2);pctx.stroke();
+    }
+    pctx.restore();
+  }
+
   pctx.setTransform(1,0,0,1,0,0);
 }
 
-// ─────────────────────────────────────────────────────────────
-// Helpers: collect style data
-// ─────────────────────────────────────────────────────────────
-function styleData(){
-  const fill  = S.colors.fill;
-  const stk   = S.colors.stroke;
-  const shd   = S.colors.shadow;
-  const bg    = S.colors.bg;
+// ─────────────────────────────────────────────
+// Presets
+// ─────────────────────────────────────────────
+const PRESETS = {
+  var_std:{
+    name:"バラエティ標準テロップ",font:"HiraKakuProN-W6",size:72,bold:false,italic:false,allcaps:false,
+    align:"center",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:220,g:220,b:220},
+    st1:{en:true,w:8,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:6,op:100,c:{r:255,g:255,b:255}},
+    sh:{en:false,op:75,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  var_yel:{
+    name:"バラエティ強調テロップ（黄・二重縁）",font:"HiraKakuProN-W6",size:80,bold:false,italic:false,allcaps:false,
+    align:"center",trk:-10,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:230,b:0},fill2:{r:255,g:180,b:0},
+    st1:{en:true,w:5,op:100,c:{r:255,g:100,b:0}},st2:{en:true,w:8,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:true,op:60,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  var_red:{
+    name:"インパクト強調（赤・白縁）",font:"HiraKakuProN-W6",size:76,bold:false,italic:false,allcaps:false,
+    align:"center",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:40,b:40},fill2:{r:200,g:0,b:0},
+    st1:{en:true,w:8,op:100,c:{r:255,g:255,b:255}},st2:{en:true,w:6,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:false,op:75,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  var_twin:{
+    name:"有料級二重縁テロップ",font:"HiraKakuProN-W6",size:80,bold:false,italic:false,allcaps:false,
+    align:"center",trk:-20,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:220,g:220,b:220},
+    st1:{en:true,w:4,op:100,c:{r:255,g:200,b:0}},st2:{en:true,w:10,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:true,op:70,bl:2,ds:5,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  nhk_doc:{
+    name:"NHK風クリーンテロップ",font:"HiraKakuProN-W3",size:60,bold:false,italic:false,allcaps:false,
+    align:"center",trk:0,ldg:130,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:200,g:200,b:200},
+    st1:{en:false,w:5,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:4,op:100,c:{r:80,g:80,b:80}},
+    sh:{en:true,op:80,bl:6,ds:3,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  doc_int:{
+    name:"インタビュー字幕",font:"HiraKakuProN-W3",size:56,bold:false,italic:false,allcaps:false,
+    align:"left",trk:0,ldg:130,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:200,g:200,b:200},
+    st1:{en:true,w:5,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:4,op:100,c:{r:80,g:80,b:80}},
+    sh:{en:true,op:60,bl:3,ds:3,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:8,pb:8,pl:16,pr:16,r:0,c:{r:0,g:0,b:0}}
+  },
+  doc_cap:{
+    name:"ロケーション・日時キャプション",font:"HiraKakuProN-W3",size:44,bold:false,italic:false,allcaps:false,
+    align:"left",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:220,g:220,b:220},fill2:{r:180,g:180,b:180},
+    st1:{en:true,w:3,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:3,op:100,c:{r:80,g:80,b:80}},
+    sh:{en:true,op:50,bl:2,ds:2,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:6,pb:6,pl:12,pr:12,r:0,c:{r:0,g:0,b:0}}
+  },
+  news_lt:{
+    name:"ニュース・ロウワーサード（青帯）",font:"HiraKakuProN-W6",size:52,bold:false,italic:false,allcaps:false,
+    align:"left",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:200,g:200,b:200},
+    st1:{en:false,w:4,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:4,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:false,op:75,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:true,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:40,b:160}}
+  },
+  news_br:{
+    name:"速報テロップ（赤帯）",font:"HiraKakuProN-W6",size:64,bold:false,italic:false,allcaps:false,
+    align:"center",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:220,g:220,b:220},
+    st1:{en:false,w:4,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:4,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:false,op:75,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:true,op:100,pt:12,pb:12,pl:24,pr:24,r:4,c:{r:200,g:0,b:0}}
+  },
+  news_scroll:{
+    name:"速報スクロール（黄文字・黒帯）",font:"HiraKakuProN-W3",size:44,bold:false,italic:false,allcaps:false,
+    align:"left",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:0},fill2:{r:220,g:200,b:0},
+    st1:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:false,op:75,bl:0,ds:4,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:true,op:100,pt:8,pb:8,pl:16,pr:16,r:0,c:{r:0,g:0,b:0}}
+  },
+  yt_pop:{
+    name:"YouTube ポップテロップ",font:"HiraKakuProN-W6",size:76,bold:false,italic:false,allcaps:false,
+    align:"center",trk:0,ldg:120,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:255,g:200,b:0},
+    st1:{en:true,w:6,op:100,c:{r:255,g:80,b:0}},st2:{en:true,w:8,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:true,op:70,bl:3,ds:5,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  yt_thumb:{
+    name:"サムネイル風ビッグテキスト",font:"HiraKakuProN-W6",size:104,bold:false,italic:false,allcaps:false,
+    align:"center",trk:-10,ldg:110,fillType:"solid",fillOp:100,
+    fill:{r:255,g:255,b:255},fill2:{r:255,g:220,b:0},
+    st1:{en:true,w:5,op:100,c:{r:200,g:0,b:0}},st2:{en:true,w:14,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:true,op:90,bl:5,ds:8,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  cinema:{
+    name:"シネマ風テロップ（グラデ）",font:"HiraMinProN-W3",size:52,bold:false,italic:false,allcaps:false,
+    align:"center",trk:80,ldg:150,fillType:"grad-v",fillOp:90,
+    fill:{r:255,g:220,b:160},fill2:{r:200,g:160,b:100},
+    st1:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:true,op:90,bl:8,ds:6,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:0,g:0,b:0}}
+  },
+  biz_clean:{
+    name:"ビジネス・コーポレート",font:"HiraKakuProN-W3",size:60,bold:false,italic:false,allcaps:false,
+    align:"left",trk:20,ldg:140,fillType:"solid",fillOp:100,
+    fill:{r:30,g:30,b:30},fill2:{r:60,g:60,b:100},
+    st1:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},st2:{en:false,w:3,op:100,c:{r:0,g:0,b:0}},
+    sh:{en:false,op:30,bl:4,ds:2,an:315,c:{r:0,g:0,b:0}},
+    bx:{en:false,op:100,pt:10,pb:10,pl:20,pr:20,r:0,c:{r:240,g:240,b:250}}
+  }
+};
+
+function loadPreset(key){
+  const p=PRESETS[key];if(!p)return;
+  $('sname').value=p.name;$('fname').value=key;
+  $('ffam').value=p.font;$('custfr').style.display='none';
+  $('fsz').value=p.size;syncR($('fsz'),'fszv');
+  setAlign(p.align);
+  $('trk').value=p.trk;syncR($('trk'),'trkv');
+  $('ldg').value=p.ldg;syncRf($('ldg'),'ldgv',0.01);
+  ['fb','fi2','fu','fac'].forEach(id=>$(id).classList.remove('active'));
+  if(p.bold)$('fb').classList.add('active');
+  if(p.italic)$('fi2').classList.add('active');
+  if(p.allcaps)$('fac').classList.add('active');
+  setFillType(p.fillType);
+  $('fop').value=p.fillOp;syncR($('fop'),'fop-v');
+  setColor('fill',p.fill.r,p.fill.g,p.fill.b);
+  setColor('fill2',p.fill2.r,p.fill2.g,p.fill2.b);
+  $('st1-en').checked=p.st1.en;setColor('stroke1',p.st1.c.r,p.st1.c.g,p.st1.c.b);
+  $('s1w').value=p.st1.w;syncR($('s1w'),'s1w-v');
+  $('s1o').value=p.st1.op;syncR($('s1o'),'s1o-v');
+  $('st2-en').checked=p.st2.en;setColor('stroke2',p.st2.c.r,p.st2.c.g,p.st2.c.b);
+  $('s2w').value=p.st2.w;syncR($('s2w'),'s2w-v');
+  $('s2o').value=p.st2.op;syncR($('s2o'),'s2o-v');
+  $('sh-en').checked=p.sh.en;setColor('shadow',p.sh.c.r,p.sh.c.g,p.sh.c.b);
+  $('sh-op').value=p.sh.op;syncR($('sh-op'),'sho-v');
+  $('sh-bl').value=p.sh.bl;syncR($('sh-bl'),'shb-v');
+  $('sh-ds').value=p.sh.ds;syncR($('sh-ds'),'shd-v');
+  $('sh-an').value=p.sh.an;syncR($('sh-an'),'sha-v');
+  $('bx-en').checked=p.bx.en;setColor('box',p.bx.c.r,p.bx.c.g,p.bx.c.b);
+  $('bx-op').value=p.bx.op;syncR($('bx-op'),'bxo-v');
+  $('bx-pt').value=p.bx.pt;syncR($('bx-pt'),'bxpt-v');
+  $('bx-pb').value=p.bx.pb;syncR($('bx-pb'),'bxpb-v');
+  $('bx-pl').value=p.bx.pl;syncR($('bx-pl'),'bxpl-v');
+  $('bx-pr').value=p.bx.pr;syncR($('bx-pr'),'bxpr-v');
+  $('bx-r').value=p.bx.r;syncR($('bx-r'),'bxr-v');
+  $('psel').value='';
+  drawPreview();
+}
+
+// ─────────────────────────────────────────────
+// Export
+// ─────────────────────────────────────────────
+function collectData(){
+  const c=S.colors;
+  function n(v){return(v/255).toFixed(6)}
   return {
-    name  : id('sname').value||'MyStyle',
-    font  : getFont(),
-    size  : parseInt(id('fsize').value),
-    fill  : {r:fill.r, g:fill.g, b:fill.b, a:fill.a, hex:toHex(fill.r,fill.g,fill.b)},
-    strokeOn  : id('st-on').checked,
-    stroke: {r:stk.r,  g:stk.g,  b:stk.b,  a:255, hex:toHex(stk.r,stk.g,stk.b)},
-    strokeW   : parseInt(id('sw').value),
-    shadowOn  : id('sh-on').checked,
-    shadow: {r:shd.r,  g:shd.g,  b:shd.b,  a:255, hex:toHex(shd.r,shd.g,shd.b)},
-    shadowOp  : parseInt(id('sh-op').value),
-    shadowD   : parseInt(id('sh-d').value),
-    shadowA   : parseInt(id('sh-a').value),
-    shadowB   : parseInt(id('sh-b').value),
-    bg    : {r:bg.r,   g:bg.g,   b:bg.b,   hex:toHex(bg.r,bg.g,bg.b)}
+    name:val('sname'),font:getFont(),size:num('fsz'),
+    bold:$('fb').classList.contains('active'),
+    italic:$('fi2').classList.contains('active'),
+    underline:$('fu').classList.contains('active'),
+    allcaps:$('fac').classList.contains('active'),
+    align:S.align,trk:num('trk'),ldg:(num('ldg')*0.01).toFixed(2),
+    fillEn:chk('fill-en'),fillOp:num('fop'),fillType:S.fillType,
+    fill:{r:c.fill.r,g:c.fill.g,b:c.fill.b,hex:toHex(c.fill.r,c.fill.g,c.fill.b),n:n},
+    fill2:{r:c.fill2.r,g:c.fill2.g,b:c.fill2.b,hex:toHex(c.fill2.r,c.fill2.g,c.fill2.b)},
+    st1En:chk('st1-en'),st1W:num('s1w'),st1O:num('s1o'),
+    st1:{r:c.stroke1.r,g:c.stroke1.g,b:c.stroke1.b,hex:toHex(c.stroke1.r,c.stroke1.g,c.stroke1.b)},
+    st2En:chk('st2-en'),st2W:num('s2w'),st2O:num('s2o'),
+    st2:{r:c.stroke2.r,g:c.stroke2.g,b:c.stroke2.b,hex:toHex(c.stroke2.r,c.stroke2.g,c.stroke2.b)},
+    shEn:chk('sh-en'),shOp:num('sh-op'),shBl:num('sh-bl'),shDs:num('sh-ds'),shAn:num('sh-an'),
+    sh:{r:c.shadow.r,g:c.shadow.g,b:c.shadow.b,hex:toHex(c.shadow.r,c.shadow.g,c.shadow.b)},
+    bxEn:chk('bx-en'),bxOp:num('bx-op'),bxPt:num('bx-pt'),bxPb:num('bx-pb'),
+    bxPl:num('bx-pl'),bxPr:num('bx-pr'),bxR:num('bx-r'),
+    bx:{r:c.box.r,g:c.box.g,b:c.box.b,hex:toHex(c.box.r,c.box.g,c.box.b)}
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// .prtextstyle XML generator
-// ─────────────────────────────────────────────────────────────
 function buildPrtextstyle(){
-  const d=styleData();
+  const d=collectData();
   function n(v){return(v/255).toFixed(6)}
   function ex(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  const gradLines=d.fillType!=='solid'?`
+    <Type>linear</Type>
+    <GradientAngle>${d.fillType==='grad-v'?90:0}</GradientAngle>
+    <GradientStops>
+      <Stop position="0"><R>${n(d.fill.r)}</R><G>${n(d.fill.g)}</G><B>${n(d.fill.b)}</B><A>1.0</A></Stop>
+      <Stop position="1"><R>${n(d.fill2.r)}</R><G>${n(d.fill2.g)}</G><B>${n(d.fill2.b)}</B><A>1.0</A></Stop>
+    </GradientStops>`:'<Type>solid</Type>';
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!--
   Premiere Pro Text Style Preset (.prtextstyle)
-  Generated by テロップスタイル解析ツール
+  Generated by テロップスタイル解析ツール Premium
   Date: ${new Date().toISOString()}
 
-  インポート方法:
-    Essential Graphics パネル > テキストスタイル >
-    パネルメニュー(≡) > [スタイルをインポート] を選択してこのファイルを選択
+  Import: Essential Graphics > テキストスタイル > パネルメニュー(≡) > スタイルをインポート
 -->
 <PremiereTextStylePreset version="1.0">
 
   <Name>${ex(d.name)}</Name>
 
-  <!-- フォント設定 -->
+  <!-- テキスト設定 -->
   <FontFamily>${ex(d.font)}</FontFamily>
-  <FontStyle>Regular</FontStyle>
+  <FontStyle>${d.bold?'Bold':'Regular'}</FontStyle>
   <FontSize>${d.size}</FontSize>
-  <Tracking>0</Tracking>
-  <Leading>1.2</Leading>
-  <Alignment>center</Alignment>
-  <Bold>false</Bold>
-  <Italic>false</Italic>
-  <Underline>false</Underline>
+  <Tracking>${d.trk}</Tracking>
+  <Leading>${d.ldg}</Leading>
+  <Alignment>${d.align}</Alignment>
+  <Bold>${d.bold}</Bold>
+  <Italic>${d.italic}</Italic>
+  <Underline>${d.underline}</Underline>
+  <AllCaps>${d.allcaps}</AllCaps>
+  <SmallCaps>false</SmallCaps>
+  <BaselineShift>0</BaselineShift>
 
-  <!-- 文字色 Fill: ${d.fill.hex} -->
+  <!-- 塗り Fill: ${d.fill.hex}${d.fillType!=='solid'?' → '+d.fill2.hex:''} -->
   <Fill>
-    <Enabled>true</Enabled>
+    <Enabled>${d.fillEn}</Enabled>
+    ${gradLines}
     <Color>
-      <R>${n(d.fill.r)}</R>
-      <G>${n(d.fill.g)}</G>
-      <B>${n(d.fill.b)}</B>
-      <A>1.000000</A>
+      <R>${n(d.fill.r)}</R><G>${n(d.fill.g)}</G><B>${n(d.fill.b)}</B><A>1.0</A>
     </Color>
-    <Opacity>1.0</Opacity>
+    <Opacity>${(d.fillOp/100).toFixed(4)}</Opacity>
   </Fill>
 
-  <!-- 縁取り Stroke: ${d.stroke.hex}  幅:${d.strokeW}px -->
-  <Stroke>
-    <Enabled>${d.strokeOn}</Enabled>
-    <Width>${d.strokeW}</Width>
-    <Color>
-      <R>${n(d.stroke.r)}</R>
-      <G>${n(d.stroke.g)}</G>
-      <B>${n(d.stroke.b)}</B>
-      <A>1.000000</A>
-    </Color>
-    <Opacity>1.0</Opacity>
-    <FillType>solid</FillType>
-    <Position>outside</Position>
-  </Stroke>
+  <!-- 縁取り Strokes -->
+  <Strokes>
+    <!-- 縁取り1 (内側) : ${d.st1.hex}  幅:${d.st1W}px -->
+    <Stroke index="0">
+      <Enabled>${d.st1En}</Enabled>
+      <Width>${d.st1W}</Width>
+      <Color><R>${n(d.st1.r)}</R><G>${n(d.st1.g)}</G><B>${n(d.st1.b)}</B><A>1.0</A></Color>
+      <Opacity>${(d.st1O/100).toFixed(4)}</Opacity>
+      <Type>solid</Type>
+      <Position>outside</Position>
+    </Stroke>
+    <!-- 縁取り2 (外側) : ${d.st2.hex}  幅:${d.st2W}px -->
+    <Stroke index="1">
+      <Enabled>${d.st2En}</Enabled>
+      <Width>${d.st1W+d.st2W}</Width>
+      <Color><R>${n(d.st2.r)}</R><G>${n(d.st2.g)}</G><B>${n(d.st2.b)}</B><A>1.0</A></Color>
+      <Opacity>${(d.st2O/100).toFixed(4)}</Opacity>
+      <Type>solid</Type>
+      <Position>outside</Position>
+    </Stroke>
+  </Strokes>
 
-  <!-- シャドウ Shadow: ${d.shadow.hex} -->
+  <!-- シャドウ Shadow: ${d.sh.hex} -->
   <DropShadow>
-    <Enabled>${d.shadowOn}</Enabled>
-    <Opacity>${(d.shadowOp/100).toFixed(6)}</Opacity>
-    <Distance>${d.shadowD}</Distance>
-    <Angle>${d.shadowA}</Angle>
-    <Blur>${d.shadowB}</Blur>
-    <Color>
-      <R>${n(d.shadow.r)}</R>
-      <G>${n(d.shadow.g)}</G>
-      <B>${n(d.shadow.b)}</B>
-      <A>1.000000</A>
-    </Color>
+    <Enabled>${d.shEn}</Enabled>
+    <Opacity>${(d.shOp/100).toFixed(4)}</Opacity>
+    <Distance>${d.shDs}</Distance>
+    <Angle>${d.shAn}</Angle>
+    <Blur>${d.shBl}</Blur>
+    <Color><R>${n(d.sh.r)}</R><G>${n(d.sh.g)}</G><B>${n(d.sh.b)}</B><A>1.0</A></Color>
   </DropShadow>
+
+  <!-- 背景ボックス Background: ${d.bx.hex} -->
+  <Background>
+    <Enabled>${d.bxEn}</Enabled>
+    <Color><R>${n(d.bx.r)}</R><G>${n(d.bx.g)}</G><B>${n(d.bx.b)}</B><A>1.0</A></Color>
+    <Opacity>${(d.bxOp/100).toFixed(4)}</Opacity>
+    <Size>
+      <Top>${d.bxPt}</Top><Bottom>${d.bxPb}</Bottom>
+      <Left>${d.bxPl}</Left><Right>${d.bxPr}</Right>
+    </Size>
+    <CornerRadius>${d.bxR}</CornerRadius>
+  </Background>
 
 </PremiereTextStylePreset>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// .jsx generator
-// ─────────────────────────────────────────────────────────────
 function buildJsx(){
-  const d=styleData();
+  const d=collectData();
   return `#target "premierepro"
 /**
  * テロップスタイル適用: ${d.name}
- * Generated by テロップスタイル解析ツール  ${new Date().toLocaleString()}
+ * Generated by テロップスタイル解析ツール Premium  ${new Date().toLocaleString()}
  * 使い方: Premiere Pro > ファイル > スクリプト > スクリプトファイルを実行
  */
 (function(){
   var D={
     name:"${d.name}",font:"${d.font}",size:${d.size},
-    fillHex:"${d.fill.hex}",fill:[${d.fill.r},${d.fill.g},${d.fill.b}],
-    strokeOn:${d.strokeOn},strokeW:${d.strokeW},strokeHex:"${d.stroke.hex}",stroke:[${d.stroke.r},${d.stroke.g},${d.stroke.b}],
-    shadowOn:${d.shadowOn},shadowOp:${d.shadowOp},shadowD:${d.shadowD},shadowA:${d.shadowA},shadowB:${d.shadowB},
-    shadowHex:"${d.shadow.hex}",shadow:[${d.shadow.r},${d.shadow.g},${d.shadow.b}]
+    bold:${d.bold},italic:${d.italic},allcaps:${d.allcaps},
+    align:"${d.align}",tracking:${d.trk},leading:${d.ldg},
+    fillHex:"${d.fill.hex}",fill:[${d.fill.r},${d.fill.g},${d.fill.b}],fillOp:${d.fillOp},fillType:"${d.fillType}",
+    fill2Hex:"${d.fill2.hex}",fill2:[${d.fill2.r},${d.fill2.g},${d.fill2.b}],
+    st1En:${d.st1En},st1W:${d.st1W},st1Hex:"${d.st1.hex}",st1:[${d.st1.r},${d.st1.g},${d.st1.b}],
+    st2En:${d.st2En},st2W:${d.st2W},st2Hex:"${d.st2.hex}",st2:[${d.st2.r},${d.st2.g},${d.st2.b}],
+    shEn:${d.shEn},shOp:${d.shOp},shBl:${d.shBl},shDs:${d.shDs},shAn:${d.shAn},shHex:"${d.sh.hex}",
+    bxEn:${d.bxEn},bxOp:${d.bxOp},bxHex:"${d.bx.hex}",bx:[${d.bx.r},${d.bx.g},${d.bx.b}],
+    bxPt:${d.bxPt},bxPb:${d.bxPb},bxPl:${d.bxPl},bxPr:${d.bxPr},bxR:${d.bxR}
   };
   var seq=app.project.activeSequence;
   if(!seq){alert("アクティブなシーケンスがありません");return;}
@@ -887,15 +1245,13 @@ function buildJsx(){
     var clips=seq.videoTracks[ti].clips;
     for(var ci=0;ci<clips.numItems;ci++){
       try{
-        var clip=clips[ci];
-        if(!clip.selected)continue;
+        var clip=clips[ci];if(!clip.selected)continue;
         var comps=clip.components;
         for(var ki=0;ki<comps.numItems;ki++){
           try{
             var props=comps[ki].properties;
             for(var pi=0;pi<props.numItems;pi++){
-              try{
-                var p=props[pi],dn=p.displayName;
+              try{var p=props[pi],dn=p.displayName;
                 if(dn==="フォントサイズ"||dn==="Font Size")p.setValue(D.size,true);
               }catch(e){}
             }
@@ -905,106 +1261,105 @@ function buildJsx(){
       }catch(e){}
     }
   }
-  var msg="スタイル: "+D.name+"\\n\\n";
-  msg+="【解析結果・設定値】\\n";
-  msg+="フォント     : "+D.font+"\\n";
-  msg+="サイズ       : "+D.size+" px\\n";
-  msg+="文字色       : "+D.fillHex+"\\n";
-  if(D.strokeOn)msg+="縁取り色     : "+D.strokeHex+" / "+D.strokeW+"px\\n";
-  if(D.shadowOn)msg+="シャドウ色   : "+D.shadowHex+" / 不透明度:"+D.shadowOp+"% 距離:"+D.shadowD+"px\\n";
-  msg+="\\n"+(applied>0?applied+"クリップにサイズを適用しました。\\nその他はEssential Graphicsパネルで設定してください。"
+  var msg="【"+D.name+"】\\n\\n";
+  msg+="フォント      : "+D.font+"\\n";
+  msg+="サイズ        : "+D.size+"px\\n";
+  msg+="揃え          : "+D.align+"\\n";
+  msg+="文字色        : "+D.fillHex+(D.fillType!=="solid"?" → "+D.fill2Hex+"（グラデ）":"")+"\\n";
+  if(D.st1En)msg+="縁取り1(内側) : "+D.st1Hex+" / "+D.st1W+"px\\n";
+  if(D.st2En)msg+="縁取り2(外側) : "+D.st2Hex+" / "+D.st2W+"px\\n";
+  if(D.shEn)msg+="シャドウ      : "+D.shHex+" / 不透明度:"+D.shOp+"% 距離:"+D.shDs+"px\\n";
+  if(D.bxEn)msg+="背景ボックス  : "+D.bxHex+" / 余白:"+D.bxPt+"/"+D.bxPb+"/"+D.bxPl+"/"+D.bxPr+"px\\n";
+  msg+="\\n"+(applied>0?applied+"クリップにフォントサイズを適用しました。\\nその他はEssential Graphicsパネルで手動設定してください。"
     :"タイムラインでテキストクリップを選択してから再実行してください。");
   alert(msg);
 }());
 `;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Report generator
-// ─────────────────────────────────────────────────────────────
 function buildReport(){
-  const d=styleData();
+  const d=collectData();
   const L=[
-    '=================================================',
+    '=======================================================',
     '  テロップスタイル解析レポート',
     '  スタイル名  : '+d.name,
     '  生成日時    : '+new Date().toLocaleString(),
-    '  対象ソフト  : Adobe Premiere Pro (1920×1080)',
-    '=================================================',
+    '  対象        : Adobe Premiere Pro (1920×1080 Full HD)',
+    '=======================================================','',
+    '■ テキスト設定',
+    '  フォント        : '+d.font,
+    '  サイズ          : '+d.size+' px',
+    '  スタイル        : '+(d.bold?'太字 ':'')+(d.italic?'斜体 ':'')+(d.underline?'下線 ':'')+(d.allcaps?'大文字':''),
+    '  文字揃え        : '+d.align,
+    '  トラッキング    : '+d.trk,
+    '  行間 (Leading)  : '+d.ldg,
     '',
-    '■ フォント',
-    '  フォントファミリー : '+d.font,
-    '  フォントサイズ     : '+d.size+' px',
+    '■ 塗り (Fill)',
+    '  有効            : '+(d.fillEn?'ON':'OFF'),
+    '  タイプ          : '+{solid:'単色',  'grad-v':'グラデーション（縦）','grad-h':'グラデーション（横）'}[d.fillType],
+    '  色1 HEX         : '+d.fill.hex,
+    '  色1 RGB         : R:'+d.fill.r+' G:'+d.fill.g+' B:'+d.fill.b,
+    ...(d.fillType!=='solid'?['  色2 HEX         : '+d.fill2.hex,'  色2 RGB         : R:'+d.fill2.r+' G:'+d.fill2.g+' B:'+d.fill2.b]:[]),
+    '  不透明度        : '+d.fillOp+'%',
     '',
-    '■ 文字色 (Fill)',
-    '  HEX : '+d.fill.hex,
-    '  RGB : R:'+d.fill.r+'  G:'+d.fill.g+'  B:'+d.fill.b,
+    '■ 縁取り1 (Stroke 1 — 内側)',
+    '  有効            : '+(d.st1En?'ON':'OFF'),
+    '  色 HEX          : '+d.st1.hex,
+    '  色 RGB          : R:'+d.st1.r+' G:'+d.st1.g+' B:'+d.st1.b,
+    '  幅              : '+d.st1W+' px',
+    '  不透明度        : '+d.st1O+'%',
     '',
-    '■ 縁取り (Stroke)',
-    '  有効     : '+(d.strokeOn?'ON':'OFF'),
-    '  色 HEX  : '+d.stroke.hex,
-    '  色 RGB  : R:'+d.stroke.r+'  G:'+d.stroke.g+'  B:'+d.stroke.b,
-    '  幅      : '+d.strokeW+' px',
+    '■ 縁取り2 (Stroke 2 — 外側・二重縁)',
+    '  有効            : '+(d.st2En?'ON':'OFF'),
+    '  色 HEX          : '+d.st2.hex,
+    '  色 RGB          : R:'+d.st2.r+' G:'+d.st2.g+' B:'+d.st2.b,
+    '  幅              : '+d.st2W+' px（縁取り1の外側に追加）',
+    '  不透明度        : '+d.st2O+'%',
     '',
     '■ シャドウ (Drop Shadow)',
-    '  有効       : '+(d.shadowOn?'ON':'OFF'),
-    '  色 HEX    : '+d.shadow.hex,
-    '  色 RGB    : R:'+d.shadow.r+'  G:'+d.shadow.g+'  B:'+d.shadow.b,
-    '  不透明度   : '+d.shadowOp+' %',
-    '  距離       : '+d.shadowD+' px',
-    '  角度       : '+d.shadowA+' °',
-    '  ぼかし     : '+d.shadowB+' px',
+    '  有効            : '+(d.shEn?'ON':'OFF'),
+    '  色 HEX          : '+d.sh.hex,
+    '  不透明度        : '+d.shOp+'%',
+    '  距離            : '+d.shDs+' px',
+    '  角度            : '+d.shAn+'°',
+    '  ぼかし          : '+d.shBl+' px',
     '',
-    '■ 背景色 (参考)',
-    '  HEX : '+d.bg.hex,
-    '  RGB : R:'+d.bg.r+'  G:'+d.bg.g+'  B:'+d.bg.b,
+    '■ 背景ボックス (Background)',
+    '  有効            : '+(d.bxEn?'ON':'OFF'),
+    '  色 HEX          : '+d.bx.hex,
+    '  不透明度        : '+d.bxOp+'%',
+    '  パディング      : 上:'+d.bxPt+' 下:'+d.bxPb+' 左:'+d.bxPl+' 右:'+d.bxPr+' px',
+    '  角丸            : '+d.bxR+' px',
     '',
-    '=================================================',
-    '  Essential Graphics パネルでの設定手順',
-    '=================================================',
-    '1. テキストレイヤーをタイムラインに追加',
-    '2. Essential Graphics パネルを開く',
-    '3. テキストを選択して上記の値を入力',
+    '=======================================================',
+    '  Premiere Pro Essential Graphics 設定手順',
+    '=======================================================',
+    '1. テキストレイヤーを追加してテキストを入力',
+    '2. Essential Graphics パネルを開いてテキストを選択',
+    '3. 上記の各値をパネルの対応する設定に入力',
     '4. パネルメニュー(≡) > [スタイルを保存] で保存',
-    '   ※または .prtextstyle ファイルをインポート',
-    '',
-    '  .prtextstyle インポート方法:',
-    '  Essential Graphics > テキストスタイル >',
-    '  パネルメニュー(≡) > [スタイルをインポート]',
-    '=================================================',
+    '   ※または .prtextstyle ファイルをパネルにインポート',
+    '=======================================================',
   ];
   return L.join('\n');
 }
 
-// ─────────────────────────────────────────────────────────────
-// Download
-// ─────────────────────────────────────────────────────────────
-function dl(content, fname, type){
-  const blob=new Blob([content],{type:type||'text/plain;charset=utf-8'});
-  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:fname});
+function exportFile(type){
+  const fname=(val('fname')||'telop').replace(/[\s\/\\:*?"<>|]/g,'_');
+  const map={
+    prtextstyle:[buildPrtextstyle(),fname+'.prtextstyle','application/xml;charset=utf-8'],
+    jsx:[buildJsx(),fname+'_apply.jsx','text/plain;charset=utf-8'],
+    report:[buildReport(),fname+'_report.txt','text/plain;charset=utf-8']
+  };
+  const [content,filename,mime]=map[type];
+  const blob=new Blob([content],{type:mime});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:filename});
   a.click();URL.revokeObjectURL(a.href);
 }
 
-function safeName(){
-  return (id('sname').value||'style').replace(/[\s\/\\:*?"<>|]/g,'_');
-}
-
-id('ex-prtextstyle').addEventListener('click',()=>dl(buildPrtextstyle(), safeName()+'.prtextstyle','application/xml;charset=utf-8'));
-id('ex-jsx').addEventListener('click',()=>dl(buildJsx(), safeName()+'_apply.jsx','text/plain;charset=utf-8'));
-id('ex-report').addEventListener('click',()=>dl(buildReport(), safeName()+'_report.txt','text/plain;charset=utf-8'));
-
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 // Init
-// ─────────────────────────────────────────────────────────────
-// Set initial color swatches
-setColor('fill',255,255,255);
-setColor('stroke',0,0,0);
-setColor('shadow',0,0,0);
-setColor('bg',30,30,30);
-S.colors.fill.set=false;
-S.colors.stroke.set=false;
-S.colors.shadow.set=false;
-S.colors.bg.set=false;
+// ─────────────────────────────────────────────
 drawPreview();
 </script>
 </body>
