@@ -1,0 +1,357 @@
+{
+  "meta": {
+    "version": "1.0",
+    "resolution": "1920x1080",
+    "colorSpace": "RGB 0-255",
+    "fontNote": "HiraKakuProN-W6/W3 = ヒラギノ角ゴ ProN / HiraMinProN-W3 = ヒラギノ明朝 ProN (macOS標準). Windows は MS ゴシック・游ゴシック等に置換してください。"
+  },
+  "categories": [
+    {
+      "name": "バラエティ・情報番組",
+      "styles": [
+        {
+          "id": "v01",
+          "name": "標準テロップ",
+          "desc": "基本の白文字・黒縁。汎用的な横テロップ",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 72,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 8 },
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.2
+        },
+        {
+          "id": "v02",
+          "name": "強調テロップ（黄）",
+          "desc": "重要・驚きの黄色テロップ",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 80,
+          "fill": { "r": 255, "g": 230, "b": 0, "hex": "#FFE600" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 10 },
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.2
+        },
+        {
+          "id": "v03",
+          "name": "強調テロップ（赤）",
+          "desc": "警告・重大情報の赤テロップ・白縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 76,
+          "fill": { "r": 255, "g": 50, "b": 50, "hex": "#FF3232" },
+          "stroke": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF", "width": 8 },
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.2
+        },
+        {
+          "id": "v04",
+          "name": "ツッコミテロップ",
+          "desc": "コメント・ツッコミ用。黄文字・赤縁・シャドウ付き",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 68,
+          "fill": { "r": 255, "g": 255, "b": 0, "hex": "#FFFF00" },
+          "stroke": { "r": 200, "g": 0, "b": 0, "hex": "#C80000", "width": 10 },
+          "shadow": { "opacity": 180, "distance": 6 },
+          "alignment": "CENTER",
+          "leading": 1.1,
+          "rotation": -3
+        },
+        {
+          "id": "v05",
+          "name": "うれしいテロップ",
+          "desc": "ポジティブ演出用・白文字・オレンジ縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 72,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 255, "g": 120, "b": 0, "hex": "#FF7800", "width": 8 },
+          "shadow": { "opacity": 160, "distance": 4 },
+          "alignment": "CENTER",
+          "leading": 1.2
+        }
+      ]
+    },
+    {
+      "name": "ドキュメンタリー・インタビュー",
+      "styles": [
+        {
+          "id": "d01",
+          "name": "インタビュー字幕",
+          "desc": "話者セリフ・字幕。白文字・細縁・シャドウ",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 56,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 5 },
+          "shadow": { "opacity": 150, "distance": 3 },
+          "alignment": "LEFT",
+          "leading": 1.3
+        },
+        {
+          "id": "d02",
+          "name": "氏名テロップ",
+          "desc": "出演者の氏名・肩書き。左下配置想定",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 52,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 5 },
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.0
+        },
+        {
+          "id": "d03",
+          "name": "ロケーション・日時キャプション",
+          "desc": "場所・日時などの補足情報。グレー文字",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 44,
+          "fill": { "r": 220, "g": 220, "b": 220, "hex": "#DCDCDC" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 3 },
+          "shadow": { "opacity": 120, "distance": 2 },
+          "alignment": "LEFT",
+          "leading": 1.2
+        },
+        {
+          "id": "d04",
+          "name": "ナレーション字幕",
+          "desc": "ナレーション音声の字幕用。明朝体・中央",
+          "font": "HiraMinProN-W3",
+          "fontSize": 52,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 4 },
+          "shadow": { "opacity": 140, "distance": 3 },
+          "alignment": "CENTER",
+          "leading": 1.3
+        }
+      ]
+    },
+    {
+      "name": "タイトル・見出し",
+      "styles": [
+        {
+          "id": "t01",
+          "name": "メインタイトル",
+          "desc": "番組・動画のメインタイトル。白文字・青縁・シャドウ",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 96,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 20, "g": 80, "b": 180, "hex": "#1450B4", "width": 14 },
+          "shadow": { "opacity": 200, "distance": 8 },
+          "alignment": "CENTER",
+          "leading": 1.2
+        },
+        {
+          "id": "t02",
+          "name": "コーナータイトル",
+          "desc": "セグメントの見出し。黄文字・黒縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 80,
+          "fill": { "r": 255, "g": 255, "b": 0, "hex": "#FFFF00" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 10 },
+          "shadow": { "opacity": 180, "distance": 6 },
+          "alignment": "CENTER",
+          "leading": 1.2
+        },
+        {
+          "id": "t03",
+          "name": "ロウワーサード",
+          "desc": "下部帯テキスト用。縁なし（青背景帯と組合せ）",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 60,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.0,
+          "note": "背景帯カラー推奨: #003CA0"
+        },
+        {
+          "id": "t04",
+          "name": "エンドロール・クレジット",
+          "desc": "スタッフクレジット用。グレー文字・細め",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 48,
+          "fill": { "r": 200, "g": 200, "b": 200, "hex": "#C8C8C8" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.8
+        }
+      ]
+    },
+    {
+      "name": "ビジネス・コーポレート",
+      "styles": [
+        {
+          "id": "b01",
+          "name": "ビジネス標準",
+          "desc": "企業動画向けのシンプルダークテキスト",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 64,
+          "fill": { "r": 30, "g": 30, "b": 30, "hex": "#1E1E1E" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.4
+        },
+        {
+          "id": "b02",
+          "name": "スライドタイトル",
+          "desc": "プレゼン・セミナー動画のタイトル。ネイビーブルー",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 80,
+          "fill": { "r": 0, "g": 60, "b": 160, "hex": "#003CA0" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.2
+        },
+        {
+          "id": "b03",
+          "name": "解説・本文テキスト",
+          "desc": "説明テキスト・長文向け。明朝体・行間広め",
+          "font": "HiraMinProN-W3",
+          "fontSize": 44,
+          "fill": { "r": 50, "g": 50, "b": 50, "hex": "#323232" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.6
+        },
+        {
+          "id": "b04",
+          "name": "キーワード強調",
+          "desc": "重要キーワードのハイライト。コーポレートブルー",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 72,
+          "fill": { "r": 0, "g": 100, "b": 220, "hex": "#0064DC" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.2
+        }
+      ]
+    },
+    {
+      "name": "YouTube・SNS",
+      "styles": [
+        {
+          "id": "y01",
+          "name": "ポップテロップ",
+          "desc": "YouTube定番・白文字オレンジ縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 76,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 255, "g": 80, "b": 0, "hex": "#FF5000", "width": 10 },
+          "shadow": { "opacity": 160, "distance": 5 },
+          "alignment": "CENTER",
+          "leading": 1.1
+        },
+        {
+          "id": "y02",
+          "name": "リアクション文字",
+          "desc": "驚き・感情の大テキスト。黄文字・赤オレンジ縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 120,
+          "fill": { "r": 255, "g": 220, "b": 0, "hex": "#FFDC00" },
+          "stroke": { "r": 255, "g": 60, "b": 0, "hex": "#FF3C00", "width": 14 },
+          "shadow": { "opacity": 200, "distance": 8 },
+          "alignment": "CENTER",
+          "leading": 1.0
+        },
+        {
+          "id": "y03",
+          "name": "サムネイル風タイトル",
+          "desc": "アイキャッチ・サムネイル用大文字",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 104,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 16 },
+          "shadow": { "opacity": 220, "distance": 10 },
+          "alignment": "CENTER",
+          "leading": 1.1
+        },
+        {
+          "id": "y04",
+          "name": "ハッシュタグ",
+          "desc": "SNSハッシュタグ表示。水色・右揃え",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 48,
+          "fill": { "r": 100, "g": 180, "b": 255, "hex": "#64B4FF" },
+          "stroke": { "r": 0, "g": 60, "b": 120, "hex": "#003C78", "width": 4 },
+          "shadow": false,
+          "alignment": "RIGHT",
+          "leading": 1.2
+        },
+        {
+          "id": "y05",
+          "name": "チャプター見出し",
+          "desc": "動画チャプター区切り用。白文字・紫縁",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 88,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 80, "g": 0, "b": 180, "hex": "#5000B4", "width": 12 },
+          "shadow": { "opacity": 180, "distance": 6 },
+          "alignment": "CENTER",
+          "leading": 1.1
+        }
+      ]
+    },
+    {
+      "name": "ニュース・報道",
+      "styles": [
+        {
+          "id": "n01",
+          "name": "ニューステロップ（帯付き）",
+          "desc": "報道スタイル。縁なし（紺帯と組合せ）",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 56,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.0,
+          "note": "背景帯カラー推奨: #0000B4"
+        },
+        {
+          "id": "n02",
+          "name": "速報テロップ（上部バナー）",
+          "desc": "緊急・速報バナー。白文字（赤帯と組合せ）",
+          "font": "HiraKakuProN-W6",
+          "fontSize": 68,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "CENTER",
+          "leading": 1.0,
+          "note": "背景帯カラー推奨: #CC0000"
+        },
+        {
+          "id": "n03",
+          "name": "速報スクロール（下部バー）",
+          "desc": "画面下部の速報テロップ。黄文字（黒帯と組合せ）",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 44,
+          "fill": { "r": 255, "g": 255, "b": 0, "hex": "#FFFF00" },
+          "stroke": null,
+          "shadow": false,
+          "alignment": "LEFT",
+          "leading": 1.0,
+          "note": "背景帯カラー推奨: #000000"
+        },
+        {
+          "id": "n04",
+          "name": "コメンテーター字幕",
+          "desc": "解説者・スタジオコメントの字幕",
+          "font": "HiraKakuProN-W3",
+          "fontSize": 52,
+          "fill": { "r": 255, "g": 255, "b": 255, "hex": "#FFFFFF" },
+          "stroke": { "r": 0, "g": 0, "b": 0, "hex": "#000000", "width": 4 },
+          "shadow": { "opacity": 160, "distance": 3 },
+          "alignment": "LEFT",
+          "leading": 1.3
+        }
+      ]
+    }
+  ]
+}
