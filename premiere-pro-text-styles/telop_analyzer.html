@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>テロップスタイル解析ツール — Premiere Pro用</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg0:#0c0c1a;--bg1:#11112a;--bg2:#181832;--bg3:#1e2044;--bg4:#242550;
+  --accent:#7c6fff;--accent2:#ff6b8a;--accent3:#4ecdc4;
+  --text:#e8e8f4;--dim:#7a7aaa;--border:#2a2a55;
+  --success:#4ade80;--warn:#facc15;--err:#f87171;
+}
+
+body{background:var(--bg0);color:var(--text);
+  font-family:-apple-system,'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif;
+  font-size:13px;line-height:1.5;min-height:100vh;overflow:hidden}
+
+/* ─── Header ─── */
+.hd{background:linear-gradient(135deg,#0a0a28,#16104a);
+  padding:12px 24px;display:flex;align-items:center;gap:14px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200}
+.hd-icon{font-size:26px}
+.hd-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
+.hd-sub{font-size:11px;color:var(--dim)}
+.badge{margin-left:auto;background:var(--accent);color:#fff;
+  padding:3px 11px;border-radius:100px;font-size:11px;font-weight:700}
+
+/* ─── Layout ─── */
+.layout{display:grid;grid-template-columns:1fr 400px;
+  height:calc(100vh - 55px)}
+
+/* ─── Left: Canvas Area ─── */
+.left{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+
+.drop-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:2.5px dashed var(--border);border-radius:14px;margin:16px;cursor:pointer;
+  transition:all .2s;background:var(--bg2);gap:10px}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:rgba(124,111,255,.07)}
+.drop-icon{font-size:52px}
+.drop-title{font-size:16px;font-weight:600}
+.drop-sub{font-size:12px;color:var(--dim);text-align:center;padding:0 20px}
+.drop-sub b{color:var(--accent)}
+
+.canvas-area{flex:1;overflow:auto;background:#111;position:relative;display:none;cursor:none}
+#img-canvas{display:block;cursor:none}
+
+/* Magnifier overlay */
+#magnifier{position:fixed;pointer-events:none;display:none;z-index:300;
+  border-radius:50%;border:3px solid #fff;box-shadow:0 4px 24px rgba(0,0,0,.8);overflow:hidden}
+#mag-label{position:fixed;pointer-events:none;display:none;z-index:301;
+  background:rgba(0,0,0,.85);color:#fff;padding:3px 8px;border-radius:6px;
+  font-size:11px;font-family:monospace;white-space:nowrap}
+
+/* Sampling mode bar */
+.mode-bar{background:var(--bg3);padding:8px 16px;display:none;
+  align-items:center;gap:6px;border-top:1px solid var(--border);flex-shrink:0}
+.mode-label{font-size:11px;color:var(--dim);margin-right:2px}
+.mbtn{padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:11px;
+  font-family:inherit;transition:all .15s}
+.mbtn:hover{border-color:var(--accent);color:var(--text)}
+.mbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.mode-hint{margin-left:auto;font-size:11px;color:var(--dim)}
+.cursor-color{width:18px;height:18px;border-radius:50%;border:2px solid #fff;display:inline-block;vertical-align:middle}
+
+/* ─── Right: Panel ─── */
+.right{background:var(--bg1);overflow-y:auto;display:flex;flex-direction:column}
+
+.sec{padding:16px 18px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* Color rows */
+.cr{display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;
+  padding:6px 8px;border-radius:10px;transition:background .15s;position:relative}
+.cr:hover{background:var(--bg3)}
+.cr.active-row::before{content:'►';position:absolute;left:-4px;color:var(--accent);font-size:10px}
+.swatch{width:38px;height:38px;border-radius:9px;border:2px solid var(--border);flex-shrink:0;
+  background:repeating-conic-gradient(#333 0% 25%,#444 0% 50%) 0 0/8px 8px;
+  transition:transform .1s}
+.swatch:hover{transform:scale(1.08)}
+.ci{flex:1;min-width:0}
+.ci-label{font-size:10px;color:var(--dim)}
+.ci-hex{font-size:14px;font-weight:700;font-family:monospace;letter-spacing:1px}
+.ci-rgb{font-size:10px;color:var(--dim);font-family:monospace}
+.cp-wrap{position:relative;width:30px;height:30px;flex-shrink:0}
+.cp-wrap input[type=color]{position:absolute;inset:0;width:100%;height:100%;
+  opacity:0;cursor:pointer;border:none;padding:0}
+.cp-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:16px;pointer-events:none;background:var(--bg3);border-radius:8px;
+  border:1.5px solid var(--border)}
+
+/* Palette chips */
+.palette{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{width:26px;height:26px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;
+  transition:transform .15s,border-color .15s;position:relative}
+.chip:hover{transform:scale(1.25);border-color:#fff}
+.chip-tip{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  background:#000d;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;
+  white-space:nowrap;pointer-events:none;display:none}
+.chip:hover .chip-tip{display:block}
+
+.analyze-btn{width:100%;padding:8px;border-radius:8px;
+  border:1.5px solid var(--accent);background:rgba(124,111,255,.1);
+  color:var(--accent);cursor:pointer;font-size:12px;font-weight:700;
+  font-family:inherit;transition:all .2s;margin-bottom:10px}
+.analyze-btn:hover{background:rgba(124,111,255,.22)}
+.analyze-btn:disabled{opacity:.35;cursor:default}
+
+/* Form */
+.fr{margin-bottom:11px}
+.fl{font-size:10px;color:var(--dim);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.fl span{color:var(--accent);font-weight:700}
+
+input[type=text],input[type=number],select{width:100%;background:var(--bg0);
+  border:1.5px solid var(--border);border-radius:8px;color:var(--text);
+  padding:8px 11px;font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--bg0)}
+
+.rr{display:flex;gap:8px;align-items:center}
+.rr input[type=range]{flex:1;accent-color:var(--accent)}
+.rv{background:var(--bg0);border:1.5px solid var(--border);border-radius:6px;
+  padding:4px 7px;font-size:11px;font-family:monospace;min-width:40px;text-align:center}
+
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.tog-lbl{font-size:12px;display:flex;align-items:center;gap:6px}
+.tog{position:relative;width:36px;height:20px}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;inset:0;background:var(--border);border-radius:100px;cursor:pointer;transition:background .2s}
+.tog-sl::before{content:'';position:absolute;width:14px;height:14px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:transform .2s}
+.tog input:checked+.tog-sl{background:var(--accent)}
+.tog input:checked+.tog-sl::before{transform:translateX(16px)}
+
+/* Preview */
+.prev-wrap{background:#111;border-radius:10px;overflow:hidden;margin-top:8px;
+  display:flex;align-items:center;justify-content:center;min-height:90px;
+  border:1px solid var(--border)}
+#prev-canvas{max-width:100%}
+
+/* Export */
+.ebtn{width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:inherit;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:7px}
+.eb-primary{background:linear-gradient(135deg,var(--accent),#a855f7);color:#fff}
+.eb-primary:hover{opacity:.88;transform:translateY(-1px)}
+.eb-sec{background:var(--bg3);color:var(--text);border:1.5px solid var(--border)}
+.eb-sec:hover{border-color:var(--accent)}
+.tip{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.4}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hd">
+  <div class="hd-icon">🎬</div>
+  <div>
+    <div class="hd-title">テロップスタイル解析ツール</div>
+    <div class="hd-sub">スクリーンショットを読み取り → カラー・設定を自動分析 → Premiere Pro 用スタイルを生成</div>
+  </div>
+  <span class="badge">for Premiere Pro</span>
+</div>
+
+<div class="layout">
+
+  <!-- ═══════════════════════════════════════════
+       LEFT: Image Area
+  ═══════════════════════════════════════════ -->
+  <div class="left">
+    <!-- Drop zone (hidden when image loaded) -->
+    <div class="drop-zone" id="dz">
+      <div class="drop-icon">🖼️</div>
+      <div class="drop-title">スクリーンショットをここにドロップ</div>
+      <div class="drop-sub">または <b>クリックしてファイルを選択</b><br>PNG / JPG / WEBP · データは外部送信されません</div>
+      <input type="file" id="fi" accept="image/*" style="display:none">
+    </div>
+
+    <!-- Canvas (shown after upload) -->
+    <div class="canvas-area" id="ca">
+      <canvas id="img-canvas"></canvas>
+    </div>
+
+    <!-- Sampling mode bar -->
+    <div class="mode-bar" id="mb">
+      <span class="mode-label">取得する色:</span>
+      <button class="mbtn active" data-m="fill">📝 文字色</button>
+      <button class="mbtn" data-m="stroke">🔲 縁取り色</button>
+      <button class="mbtn" data-m="shadow">🌑 シャドウ色</button>
+      <button class="mbtn" data-m="bg">🎨 背景色</button>
+      <span class="mode-hint" id="cursor-info">
+        <span class="cursor-color" id="cur-swatch"></span>
+        <span id="cur-hex" style="margin-left:5px;font-family:monospace;font-size:11px">—</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       RIGHT: Analysis Panel
+  ═══════════════════════════════════════════ -->
+  <div class="right">
+
+    <!-- Auto Analysis -->
+    <div class="sec">
+      <div class="sec-title">🔍 自動カラー解析</div>
+      <button class="analyze-btn" id="abtn" disabled>✨ 画像から主要カラーを自動検出</button>
+      <div class="palette" id="palette"></div>
+      <p class="tip">チップをクリック → 現在選択中の枠に色を設定 | 右の「取得する色」を切り替えてから画像をクリックでも取得できます</p>
+    </div>
+
+    <!-- Colors -->
+    <div class="sec">
+      <div class="sec-title">🎨 カラー設定</div>
+      <div class="cr active-row" id="row-fill" data-m="fill">
+        <div class="swatch" id="sw-fill"></div>
+        <div class="ci">
+          <div class="ci-label">文字色 (Fill)</div>
+          <div class="ci-hex" id="hx-fill">—</div>
+          <div class="ci-rgb" id="rb-fill"></div>
+        </div>
+        <div class="cp-wrap">
+          <input type="color" id="cp-fill" value="#ffffff">
+          <div class="cp-icon">🖊</div>
+        </div>
+      </div>
+      <div class="cr" id="row-stroke" data-m="stroke">
+        <div class="swatch" id="sw-stroke"></div>
+        <div class="ci">
+          <div class="ci-label">縁取り色 (Stroke)</div>
+          <div class="ci-hex" id="hx-stroke">—</div>
+          <div class="ci-rgb" id="rb-stroke"></div>
+        </div>
+        <div class="cp-wrap">
+          <input type="color" id="cp-stroke" value="#000000">
+          <div class="cp-icon">🖊</div>
+        </div>
+      </div>
+      <div class="cr" id="row-shadow" data-m="shadow">
+        <div class="swatch" id="sw-shadow"></div>
+        <div class="ci">
+          <div class="ci-label">シャドウ色 (Shadow)</div>
+          <div class="ci-hex" id="hx-shadow">—</div>
+          <div class="ci-rgb" id="rb-shadow"></div>
+        </div>
+        <div class="cp-wrap">
+          <input type="color" id="cp-shadow" value="#000000">
+          <div class="cp-icon">🖊</div>
+        </div>
+      </div>
+      <div class="cr" id="row-bg" data-m="bg">
+        <div class="swatch" id="sw-bg"></div>
+        <div class="ci">
+          <div class="ci-label">背景色 (Background)</div>
+          <div class="ci-hex" id="hx-bg">—</div>
+          <div class="ci-rgb" id="rb-bg"></div>
+        </div>
+        <div class="cp-wrap">
+          <input type="color" id="cp-bg" value="#1e1e1e">
+          <div class="cp-icon">🖊</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Style Settings -->
+    <div class="sec">
+      <div class="sec-title">⚙️ スタイル設定</div>
+
+      <div class="fr">
+        <div class="fl">スタイル名</div>
+        <input type="text" id="sname" value="マイテロップスタイル">
+      </div>
+
+      <div class="fr">
+        <div class="fl">フォントファミリー</div>
+        <select id="ffam">
+          <optgroup label="ヒラギノ (macOS)">
+            <option value="HiraKakuProN-W6">ヒラギノ角ゴ W6 (太)</option>
+            <option value="HiraKakuProN-W3">ヒラギノ角ゴ W3 (細)</option>
+            <option value="HiraKakuStd-W8">ヒラギノ角ゴ W8 (特太)</option>
+            <option value="HiraMinProN-W3">ヒラギノ明朝 W3</option>
+            <option value="HiraMinProN-W6">ヒラギノ明朝 W6</option>
+          </optgroup>
+          <optgroup label="游書体 (Windows/macOS)">
+            <option value="YuGo-Bold">游ゴシック Bold</option>
+            <option value="YuGo-Medium">游ゴシック Medium</option>
+            <option value="YuMin-Medium">游明朝 Medium</option>
+          </optgroup>
+          <optgroup label="Noto Sans">
+            <option value="NotoSansJP-Bold">Noto Sans JP Bold</option>
+            <option value="NotoSansJP-Regular">Noto Sans JP Regular</option>
+          </optgroup>
+          <optgroup label="欧文">
+            <option value="Arial">Arial</option>
+            <option value="Arial Black">Arial Black</option>
+            <option value="Impact">Impact</option>
+            <option value="Helvetica Neue">Helvetica Neue</option>
+          </optgroup>
+          <option value="__">── カスタム入力 ──</option>
+        </select>
+      </div>
+      <div class="fr" id="cust-fr" style="display:none">
+        <div class="fl">フォント名（直接入力）</div>
+        <input type="text" id="cust-font" placeholder="例: NotoSansJP-Bold">
+      </div>
+
+      <div class="fr">
+        <div class="fl">フォントサイズ <span id="fs-v">72</span> px</div>
+        <div class="rr"><input type="range" id="fsize" min="12" max="200" value="72">
+          <span class="rv" id="fs-d">72</span></div>
+      </div>
+
+      <!-- Stroke -->
+      <div class="tog-row">
+        <span class="tog-lbl">🔲 縁取り (Stroke)</span>
+        <label class="tog"><input type="checkbox" id="st-on" checked><span class="tog-sl"></span></label>
+      </div>
+      <div id="st-ctrl">
+        <div class="fr">
+          <div class="fl">縁取りサイズ <span id="sw-v">8</span> px</div>
+          <div class="rr"><input type="range" id="sw" min="0" max="40" value="8">
+            <span class="rv" id="sw-d">8</span></div>
+        </div>
+      </div>
+
+      <!-- Shadow -->
+      <div class="tog-row">
+        <span class="tog-lbl">🌑 シャドウ (Drop Shadow)</span>
+        <label class="tog"><input type="checkbox" id="sh-on"><span class="tog-sl"></span></label>
+      </div>
+      <div id="sh-ctrl" style="display:none">
+        <div class="fr">
+          <div class="fl">不透明度 <span id="so-v">75</span> %</div>
+          <div class="rr"><input type="range" id="sh-op" min="0" max="100" value="75">
+            <span class="rv" id="so-d">75</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">距離 (Distance) <span id="sd-v">4</span> px</div>
+          <div class="rr"><input type="range" id="sh-d" min="0" max="40" value="4">
+            <span class="rv" id="sd-d">4</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">角度 (Angle) <span id="sa-v">315</span> °</div>
+          <div class="rr"><input type="range" id="sh-a" min="0" max="360" value="315">
+            <span class="rv" id="sa-d">315</span></div>
+        </div>
+        <div class="fr">
+          <div class="fl">ぼかし (Blur) <span id="sb-v">0</span> px</div>
+          <div class="rr"><input type="range" id="sh-b" min="0" max="30" value="0">
+            <span class="rv" id="sb-d">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="sec">
+      <div class="sec-title">👁️ プレビュー</div>
+      <div class="fr">
+        <input type="text" id="pvtxt" value="サンプルテロップ" placeholder="プレビューテキスト">
+      </div>
+      <div class="prev-wrap"><canvas id="prev-canvas" width="364" height="90"></canvas></div>
+    </div>
+
+    <!-- Export -->
+    <div class="sec">
+      <div class="sec-title">💾 書き出し</div>
+      <button class="ebtn eb-primary" id="ex-prtextstyle">
+        📦 .prtextstyle として保存 (Premiere Pro)
+      </button>
+      <button class="ebtn eb-sec" id="ex-jsx">
+        📜 ExtendScript (.jsx) として保存
+      </button>
+      <button class="ebtn eb-sec" id="ex-report">
+        📄 解析レポート (.txt) として保存
+      </button>
+      <p class="tip">
+        .prtextstyle → Essential Graphics パネル > テキストスタイル > スタイルをインポート<br>
+        .jsx → Premiere Pro > ファイル > スクリプト > スクリプトファイルを実行...
+      </p>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /layout -->
+
+<!-- Magnifier -->
+<div id="magnifier" style="width:80px;height:80px"></div>
+<div id="mag-label"></div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────
+const S = {
+  mode: 'fill',
+  colors: {
+    fill:   {r:255,g:255,b:255,a:255,set:false},
+    stroke: {r:0,  g:0,  b:0,  a:255,set:false},
+    shadow: {r:0,  g:0,  b:0,  a:255,set:false},
+    bg:     {r:30, g:30, b:30, a:255,set:false}
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// DOM
+// ─────────────────────────────────────────────────────────────
+const dz  = id('dz');
+const fi  = id('fi');
+const ca  = id('ca');
+const mb  = id('mb');
+const ic  = id('img-canvas');
+const ctx = ic.getContext('2d');
+const pc  = id('prev-canvas');
+const pctx= pc.getContext('2d');
+const mag = id('magnifier');
+const mgl = id('mag-label');
+const magCtx = document.createElement('canvas').getContext('2d');
+
+function id(x){return document.getElementById(x)}
+
+// ─────────────────────────────────────────────────────────────
+// Upload / Drag-drop
+// ─────────────────────────────────────────────────────────────
+dz.addEventListener('click', ()=>fi.click());
+fi.addEventListener('change', e=>loadImg(e.target.files[0]));
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault();dz.classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/'))loadImg(f);
+});
+
+// Paste support
+document.addEventListener('paste', e=>{
+  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(item) loadImg(item.getAsFile());
+});
+
+function loadImg(file){
+  if(!file)return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = ()=>{
+    // fit to canvas area
+    const maxW = ca.clientWidth  || window.innerWidth*0.6;
+    const maxH = (window.innerHeight - 55 - 44);
+    const sc   = Math.min(maxW/img.width, maxH/img.height, 1);
+    ic.width   = Math.round(img.width*sc);
+    ic.height  = Math.round(img.height*sc);
+    ctx.drawImage(img,0,0,ic.width,ic.height);
+    S._img = img; S._sc = sc;
+    // magnifier canvas size
+    magCtx.canvas.width = magCtx.canvas.height = 80;
+
+    dz.style.display='none';
+    ca.style.display='block';
+    mb.style.display='flex';
+    id('abtn').disabled=false;
+    autoAnalyze();
+    URL.revokeObjectURL(url);
+  };
+  img.src=url;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Canvas interaction: click to sample
+// ─────────────────────────────────────────────────────────────
+ic.addEventListener('click', e=>{
+  const {x,y} = canvasXY(e);
+  const px = ctx.getImageData(x,y,1,1).data;
+  setColor(S.mode, px[0],px[1],px[2],px[3]);
+  drawPreview();
+});
+
+// Hover: magnifier
+ic.addEventListener('mousemove', e=>{
+  const rect = ic.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const xi = Math.round(cx*(ic.width/rect.width));
+  const yi = Math.round(cy*(ic.height/rect.height));
+  const px = ctx.getImageData(Math.max(0,xi),Math.max(0,yi),1,1).data;
+  const hex= toHex(px[0],px[1],px[2]);
+
+  // cursor color display
+  id('cur-swatch').style.background=hex;
+  id('cur-hex').textContent=hex;
+
+  // magnifier position
+  const mx = e.clientX+16, my = e.clientY-40;
+  mag.style.display='block';
+  mgl.style.display='block';
+  mag.style.left   = mx+'px';
+  mag.style.top    = my+'px';
+  mgl.style.left   = mx+'px';
+  mgl.style.top    = (my+85)+'px';
+  mgl.textContent  = hex+`  R:${px[0]} G:${px[1]} B:${px[2]}`;
+
+  // draw magnified region
+  const zoom = 6;
+  const half = 40/zoom;
+  magCtx.clearRect(0,0,80,80);
+  magCtx.imageSmoothingEnabled=false;
+  magCtx.drawImage(ic,
+    Math.max(0,xi-half), Math.max(0,yi-half), half*2, half*2,
+    0, 0, 80, 80);
+  // crosshair
+  magCtx.strokeStyle='rgba(255,255,255,0.8)';
+  magCtx.lineWidth=1;
+  magCtx.beginPath();magCtx.moveTo(40,0);magCtx.lineTo(40,80);magCtx.stroke();
+  magCtx.beginPath();magCtx.moveTo(0,40);magCtx.lineTo(80,40);magCtx.stroke();
+
+  // Apply magnifier image
+  mag.style.backgroundImage=`url(${magCtx.canvas.toDataURL()})`;
+  mag.style.backgroundSize='80px 80px';
+});
+
+ic.addEventListener('mouseleave', ()=>{
+  mag.style.display='none';
+  mgl.style.display='none';
+  id('cur-hex').textContent='—';
+  id('cur-swatch').style.background='transparent';
+});
+
+function canvasXY(e){
+  const rect=ic.getBoundingClientRect();
+  return {
+    x:Math.round((e.clientX-rect.left)*(ic.width/rect.width)),
+    y:Math.round((e.clientY-rect.top) *(ic.height/rect.height))
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Sampling mode buttons
+// ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.mbtn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    setActiveMode(btn.dataset.m);
+  });
+});
+
+// Color row click → activate mode
+document.querySelectorAll('.cr').forEach(row=>{
+  row.addEventListener('click', ()=>{
+    const m=row.dataset.m;
+    document.querySelectorAll('.cr').forEach(r=>r.classList.remove('active-row'));
+    row.classList.add('active-row');
+    setActiveMode(m);
+  });
+});
+
+function setActiveMode(m){
+  S.mode=m;
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active',b.dataset.m===m));
+  document.querySelectorAll('.cr').forEach(r=>r.classList.toggle('active-row',r.dataset.m===m));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Color management
+// ─────────────────────────────────────────────────────────────
+function toHex(r,g,b){
+  return '#'+[r,g,b].map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function hexToRgb(hex){
+  return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};
+}
+function luma(r,g,b){return 0.299*r+0.587*g+0.114*b}
+
+function setColor(m,r,g,b,a=255){
+  const c=S.colors[m];
+  c.r=r;c.g=g;c.b=b;c.a=a;c.set=true;
+  const hex=toHex(r,g,b);
+  id('sw-'+m).style.background=hex;
+  id('hx-'+m).textContent=hex;
+  id('rb-'+m).textContent=`R:${r}  G:${g}  B:${b}`;
+  id('cp-'+m).value=hex;
+}
+
+// Color picker inputs
+['fill','stroke','shadow','bg'].forEach(m=>{
+  id('cp-'+m).addEventListener('input',e=>{
+    const {r,g,b}=hexToRgb(e.target.value);
+    setColor(m,r,g,b);
+    drawPreview();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Auto dominant color analysis
+// ─────────────────────────────────────────────────────────────
+id('abtn').addEventListener('click', autoAnalyze);
+
+function autoAnalyze(){
+  if(!S._img)return;
+  const data = ctx.getImageData(0,0,ic.width,ic.height).data;
+  const step = Math.max(1,Math.floor(data.length/4/3000));
+  const pts  = [];
+  for(let i=0;i<data.length;i+=4*step){
+    if(data[i+3]<128)continue;
+    pts.push([data[i],data[i+1],data[i+2]]);
+  }
+  const clusters = quantCluster(pts,10);
+
+  // Display palette
+  const pal = id('palette');
+  pal.innerHTML='';
+  clusters.forEach(c=>{
+    const hex=toHex(c[0],c[1],c[2]);
+    const chip=document.createElement('div');
+    chip.className='chip';
+    chip.style.background=hex;
+    chip.innerHTML=`<span class="chip-tip">${hex}</span>`;
+    chip.title=hex;
+    chip.addEventListener('click',()=>{
+      const {r,g,b}=hexToRgb(hex);
+      setColor(S.mode,r,g,b);
+      drawPreview();
+    });
+    pal.appendChild(chip);
+  });
+
+  // Smart auto-assign
+  if(!S.colors.fill.set && clusters.length>0){
+    const bright = [...clusters].sort((a,b)=>luma(...b)-luma(...a))[0];
+    setColor('fill',bright[0],bright[1],bright[2]);
+  }
+  if(!S.colors.stroke.set && clusters.length>1){
+    const dark = [...clusters].sort((a,b)=>luma(...a)-luma(...b))[0];
+    setColor('stroke',dark[0],dark[1],dark[2]);
+  }
+  if(!S.colors.bg.set && clusters.length>2){
+    // pick most frequent dark-ish color for bg
+    const bgCluster = [...clusters].sort((a,b)=>luma(...a)-luma(...b))[1]||clusters[clusters.length-1];
+    setColor('bg',bgCluster[0],bgCluster[1],bgCluster[2]);
+  }
+  drawPreview();
+}
+
+function quantCluster(pts, k){
+  if(!pts.length)return[];
+  // Quantize
+  const q={};
+  pts.forEach(([r,g,b])=>{
+    const key=`${r>>2},${g>>2},${b>>2}`;
+    q[key]=(q[key]||{c:0,r:0,g:0,b:0});
+    q[key].c++;q[key].r+=r;q[key].g+=g;q[key].b+=b;
+  });
+  const sorted=Object.values(q).sort((a,b)=>b.c-a.c);
+  const centroids=[];
+  for(const e of sorted){
+    if(centroids.length>=k)break;
+    const r=Math.round(e.r/e.c),g=Math.round(e.g/e.c),b=Math.round(e.b/e.c);
+    const tooClose=centroids.some(c=>Math.hypot(c[0]-r,c[1]-g,c[2]-b)<35);
+    if(!tooClose)centroids.push([r,g,b]);
+  }
+  return centroids;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Controls binding
+// ─────────────────────────────────────────────────────────────
+function bindRange(slId,dispId,valId){
+  const sl=id(slId),dp=id(dispId),vl=id(valId);
+  sl.addEventListener('input',()=>{dp.textContent=sl.value;if(vl)vl.textContent=sl.value;drawPreview()});
+}
+bindRange('fsize','fs-d','fs-v');
+bindRange('sw','sw-d','sw-v');
+bindRange('sh-op','so-d','so-v');
+bindRange('sh-d','sd-d','sd-v');
+bindRange('sh-a','sa-d','sa-v');
+bindRange('sh-b','sb-d','sb-v');
+
+id('st-on').addEventListener('change',e=>{
+  id('st-ctrl').style.display=e.target.checked?'':'none';drawPreview();});
+id('sh-on').addEventListener('change',e=>{
+  id('sh-ctrl').style.display=e.target.checked?'block':'none';drawPreview();});
+id('ffam').addEventListener('change',e=>{
+  id('cust-fr').style.display=e.target.value==='__'?'':'none';drawPreview();});
+id('pvtxt').addEventListener('input',drawPreview);
+id('cust-font').addEventListener('input',drawPreview);
+
+// ─────────────────────────────────────────────────────────────
+// Preview canvas
+// ─────────────────────────────────────────────────────────────
+function getFont(){
+  const v=id('ffam').value;
+  return v==='__'?id('cust-font').value||'sans-serif':v;
+}
+
+function drawPreview(){
+  const text = id('pvtxt').value||'テロップ';
+  const fill = S.colors.fill;
+  const stk  = S.colors.stroke;
+  const shd  = S.colors.shadow;
+  const bg   = S.colors.bg;
+  const sz   = parseInt(id('fsize').value);
+  const font = getFont();
+  const sw   = parseInt(id('sw').value);
+  const stOn = id('st-on').checked;
+  const shOn = id('sh-on').checked;
+  const shOp = parseInt(id('sh-op').value)/100;
+  const shD  = parseInt(id('sh-d').value);
+  const shA  = parseInt(id('sh-a').value);
+  const shB  = parseInt(id('sh-b').value);
+
+  const DPR=2,cw=364,ch=90;
+  pc.width=cw*DPR;pc.height=ch*DPR;
+  pc.style.width=cw+'px';pc.style.height=ch+'px';
+  pctx.setTransform(DPR,0,0,DPR,0,0);
+
+  // bg
+  pctx.fillStyle=bg.set?`rgb(${bg.r},${bg.g},${bg.b})`:'#1a1a1a';
+  pctx.fillRect(0,0,cw,ch);
+
+  const fontSize=Math.min(sz,54);
+  pctx.font=`bold ${fontSize}px "${font}"`;
+  pctx.textAlign='center';
+  pctx.textBaseline='middle';
+  const tx=cw/2,ty=ch/2;
+
+  // shadow first
+  if(shOn){
+    const rad=(shA-90)*Math.PI/180;
+    pctx.shadowColor=`rgba(${shd.r},${shd.g},${shd.b},${shOp})`;
+    pctx.shadowBlur=shB;
+    pctx.shadowOffsetX=Math.cos(rad)*shD;
+    pctx.shadowOffsetY=Math.sin(rad)*shD;
+  } else {
+    pctx.shadowColor='transparent';pctx.shadowBlur=0;
+    pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
+  }
+
+  // stroke
+  if(stOn&&sw>0){
+    pctx.strokeStyle=`rgb(${stk.r},${stk.g},${stk.b})`;
+    pctx.lineWidth=Math.min(sw,24)*2;
+    pctx.lineJoin='round';
+    pctx.strokeText(text,tx,ty);
+    pctx.shadowColor='transparent';
+    pctx.shadowBlur=0;pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
+  }
+
+  // fill
+  pctx.fillStyle=`rgb(${fill.r},${fill.g},${fill.b})`;
+  pctx.shadowColor='transparent';pctx.shadowBlur=0;
+  pctx.shadowOffsetX=0;pctx.shadowOffsetY=0;
+  pctx.fillText(text,tx,ty);
+  pctx.setTransform(1,0,0,1,0,0);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers: collect style data
+// ─────────────────────────────────────────────────────────────
+function styleData(){
+  const fill  = S.colors.fill;
+  const stk   = S.colors.stroke;
+  const shd   = S.colors.shadow;
+  const bg    = S.colors.bg;
+  return {
+    name  : id('sname').value||'MyStyle',
+    font  : getFont(),
+    size  : parseInt(id('fsize').value),
+    fill  : {r:fill.r, g:fill.g, b:fill.b, a:fill.a, hex:toHex(fill.r,fill.g,fill.b)},
+    strokeOn  : id('st-on').checked,
+    stroke: {r:stk.r,  g:stk.g,  b:stk.b,  a:255, hex:toHex(stk.r,stk.g,stk.b)},
+    strokeW   : parseInt(id('sw').value),
+    shadowOn  : id('sh-on').checked,
+    shadow: {r:shd.r,  g:shd.g,  b:shd.b,  a:255, hex:toHex(shd.r,shd.g,shd.b)},
+    shadowOp  : parseInt(id('sh-op').value),
+    shadowD   : parseInt(id('sh-d').value),
+    shadowA   : parseInt(id('sh-a').value),
+    shadowB   : parseInt(id('sh-b').value),
+    bg    : {r:bg.r,   g:bg.g,   b:bg.b,   hex:toHex(bg.r,bg.g,bg.b)}
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// .prtextstyle XML generator
+// ─────────────────────────────────────────────────────────────
+function buildPrtextstyle(){
+  const d=styleData();
+  function n(v){return(v/255).toFixed(6)}
+  function ex(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Premiere Pro Text Style Preset (.prtextstyle)
+  Generated by テロップスタイル解析ツール
+  Date: ${new Date().toISOString()}
+
+  インポート方法:
+    Essential Graphics パネル > テキストスタイル >
+    パネルメニュー(≡) > [スタイルをインポート] を選択してこのファイルを選択
+-->
+<PremiereTextStylePreset version="1.0">
+
+  <Name>${ex(d.name)}</Name>
+
+  <!-- フォント設定 -->
+  <FontFamily>${ex(d.font)}</FontFamily>
+  <FontStyle>Regular</FontStyle>
+  <FontSize>${d.size}</FontSize>
+  <Tracking>0</Tracking>
+  <Leading>1.2</Leading>
+  <Alignment>center</Alignment>
+  <Bold>false</Bold>
+  <Italic>false</Italic>
+  <Underline>false</Underline>
+
+  <!-- 文字色 Fill: ${d.fill.hex} -->
+  <Fill>
+    <Enabled>true</Enabled>
+    <Color>
+      <R>${n(d.fill.r)}</R>
+      <G>${n(d.fill.g)}</G>
+      <B>${n(d.fill.b)}</B>
+      <A>1.000000</A>
+    </Color>
+    <Opacity>1.0</Opacity>
+  </Fill>
+
+  <!-- 縁取り Stroke: ${d.stroke.hex}  幅:${d.strokeW}px -->
+  <Stroke>
+    <Enabled>${d.strokeOn}</Enabled>
+    <Width>${d.strokeW}</Width>
+    <Color>
+      <R>${n(d.stroke.r)}</R>
+      <G>${n(d.stroke.g)}</G>
+      <B>${n(d.stroke.b)}</B>
+      <A>1.000000</A>
+    </Color>
+    <Opacity>1.0</Opacity>
+    <FillType>solid</FillType>
+    <Position>outside</Position>
+  </Stroke>
+
+  <!-- シャドウ Shadow: ${d.shadow.hex} -->
+  <DropShadow>
+    <Enabled>${d.shadowOn}</Enabled>
+    <Opacity>${(d.shadowOp/100).toFixed(6)}</Opacity>
+    <Distance>${d.shadowD}</Distance>
+    <Angle>${d.shadowA}</Angle>
+    <Blur>${d.shadowB}</Blur>
+    <Color>
+      <R>${n(d.shadow.r)}</R>
+      <G>${n(d.shadow.g)}</G>
+      <B>${n(d.shadow.b)}</B>
+      <A>1.000000</A>
+    </Color>
+  </DropShadow>
+
+</PremiereTextStylePreset>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// .jsx generator
+// ─────────────────────────────────────────────────────────────
+function buildJsx(){
+  const d=styleData();
+  return `#target "premierepro"
+/**
+ * テロップスタイル適用: ${d.name}
+ * Generated by テロップスタイル解析ツール  ${new Date().toLocaleString()}
+ * 使い方: Premiere Pro > ファイル > スクリプト > スクリプトファイルを実行
+ */
+(function(){
+  var D={
+    name:"${d.name}",font:"${d.font}",size:${d.size},
+    fillHex:"${d.fill.hex}",fill:[${d.fill.r},${d.fill.g},${d.fill.b}],
+    strokeOn:${d.strokeOn},strokeW:${d.strokeW},strokeHex:"${d.stroke.hex}",stroke:[${d.stroke.r},${d.stroke.g},${d.stroke.b}],
+    shadowOn:${d.shadowOn},shadowOp:${d.shadowOp},shadowD:${d.shadowD},shadowA:${d.shadowA},shadowB:${d.shadowB},
+    shadowHex:"${d.shadow.hex}",shadow:[${d.shadow.r},${d.shadow.g},${d.shadow.b}]
+  };
+  var seq=app.project.activeSequence;
+  if(!seq){alert("アクティブなシーケンスがありません");return;}
+  var applied=0;
+  for(var ti=0;ti<seq.videoTracks.numTracks;ti++){
+    var clips=seq.videoTracks[ti].clips;
+    for(var ci=0;ci<clips.numItems;ci++){
+      try{
+        var clip=clips[ci];
+        if(!clip.selected)continue;
+        var comps=clip.components;
+        for(var ki=0;ki<comps.numItems;ki++){
+          try{
+            var props=comps[ki].properties;
+            for(var pi=0;pi<props.numItems;pi++){
+              try{
+                var p=props[pi],dn=p.displayName;
+                if(dn==="フォントサイズ"||dn==="Font Size")p.setValue(D.size,true);
+              }catch(e){}
+            }
+          }catch(e){}
+        }
+        applied++;
+      }catch(e){}
+    }
+  }
+  var msg="スタイル: "+D.name+"\\n\\n";
+  msg+="【解析結果・設定値】\\n";
+  msg+="フォント     : "+D.font+"\\n";
+  msg+="サイズ       : "+D.size+" px\\n";
+  msg+="文字色       : "+D.fillHex+"\\n";
+  if(D.strokeOn)msg+="縁取り色     : "+D.strokeHex+" / "+D.strokeW+"px\\n";
+  if(D.shadowOn)msg+="シャドウ色   : "+D.shadowHex+" / 不透明度:"+D.shadowOp+"% 距離:"+D.shadowD+"px\\n";
+  msg+="\\n"+(applied>0?applied+"クリップにサイズを適用しました。\\nその他はEssential Graphicsパネルで設定してください。"
+    :"タイムラインでテキストクリップを選択してから再実行してください。");
+  alert(msg);
+}());
+`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Report generator
+// ─────────────────────────────────────────────────────────────
+function buildReport(){
+  const d=styleData();
+  const L=[
+    '=================================================',
+    '  テロップスタイル解析レポート',
+    '  スタイル名  : '+d.name,
+    '  生成日時    : '+new Date().toLocaleString(),
+    '  対象ソフト  : Adobe Premiere Pro (1920×1080)',
+    '=================================================',
+    '',
+    '■ フォント',
+    '  フォントファミリー : '+d.font,
+    '  フォントサイズ     : '+d.size+' px',
+    '',
+    '■ 文字色 (Fill)',
+    '  HEX : '+d.fill.hex,
+    '  RGB : R:'+d.fill.r+'  G:'+d.fill.g+'  B:'+d.fill.b,
+    '',
+    '■ 縁取り (Stroke)',
+    '  有効     : '+(d.strokeOn?'ON':'OFF'),
+    '  色 HEX  : '+d.stroke.hex,
+    '  色 RGB  : R:'+d.stroke.r+'  G:'+d.stroke.g+'  B:'+d.stroke.b,
+    '  幅      : '+d.strokeW+' px',
+    '',
+    '■ シャドウ (Drop Shadow)',
+    '  有効       : '+(d.shadowOn?'ON':'OFF'),
+    '  色 HEX    : '+d.shadow.hex,
+    '  色 RGB    : R:'+d.shadow.r+'  G:'+d.shadow.g+'  B:'+d.shadow.b,
+    '  不透明度   : '+d.shadowOp+' %',
+    '  距離       : '+d.shadowD+' px',
+    '  角度       : '+d.shadowA+' °',
+    '  ぼかし     : '+d.shadowB+' px',
+    '',
+    '■ 背景色 (参考)',
+    '  HEX : '+d.bg.hex,
+    '  RGB : R:'+d.bg.r+'  G:'+d.bg.g+'  B:'+d.bg.b,
+    '',
+    '=================================================',
+    '  Essential Graphics パネルでの設定手順',
+    '=================================================',
+    '1. テキストレイヤーをタイムラインに追加',
+    '2. Essential Graphics パネルを開く',
+    '3. テキストを選択して上記の値を入力',
+    '4. パネルメニュー(≡) > [スタイルを保存] で保存',
+    '   ※または .prtextstyle ファイルをインポート',
+    '',
+    '  .prtextstyle インポート方法:',
+    '  Essential Graphics > テキストスタイル >',
+    '  パネルメニュー(≡) > [スタイルをインポート]',
+    '=================================================',
+  ];
+  return L.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Download
+// ─────────────────────────────────────────────────────────────
+function dl(content, fname, type){
+  const blob=new Blob([content],{type:type||'text/plain;charset=utf-8'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:fname});
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+function safeName(){
+  return (id('sname').value||'style').replace(/[\s\/\\:*?"<>|]/g,'_');
+}
+
+id('ex-prtextstyle').addEventListener('click',()=>dl(buildPrtextstyle(), safeName()+'.prtextstyle','application/xml;charset=utf-8'));
+id('ex-jsx').addEventListener('click',()=>dl(buildJsx(), safeName()+'_apply.jsx','text/plain;charset=utf-8'));
+id('ex-report').addEventListener('click',()=>dl(buildReport(), safeName()+'_report.txt','text/plain;charset=utf-8'));
+
+// ─────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────
+// Set initial color swatches
+setColor('fill',255,255,255);
+setColor('stroke',0,0,0);
+setColor('shadow',0,0,0);
+setColor('bg',30,30,30);
+S.colors.fill.set=false;
+S.colors.stroke.set=false;
+S.colors.shadow.set=false;
+S.colors.bg.set=false;
+drawPreview();
+</script>
+</body>
+</html>
