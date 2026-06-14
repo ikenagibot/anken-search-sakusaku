@@ -59,13 +59,6 @@ body{background:var(--bg0);color:var(--txt);
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
 
 /* Top fixed area */
-.top-fixed{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-.name-row{display:flex;gap:6px}
-.name-row label{font-size:10px;color:var(--dim);white-space:nowrap;align-self:center}
-.name-row input{flex:1}
-.preset-row{display:flex;gap:6px;align-items:center}
-.preset-row label{font-size:10px;color:var(--dim);white-space:nowrap}
-.preset-row select{flex:1;font-size:11px}
 
 /* Accordion */
 .acc{border-bottom:1px solid var(--bdr)}
@@ -300,43 +293,6 @@ select option{background:var(--bg0)}
 <!-- ═══ RIGHT ═══ -->
 <div class="right">
 
-<!-- Top: Name + Preset -->
-<div class="top-fixed">
-  <div class="name-row">
-    <label>スタイル名:</label>
-    <input type="text" id="sname" value="マイテロップスタイル" placeholder="スタイル名">
-    <label style="margin-left:4px">ファイル名:</label>
-    <input type="text" id="fname" value="my_telop" placeholder="保存ファイル名" style="width:100px">
-  </div>
-  <div class="preset-row">
-    <label>プリセット:</label>
-    <select id="psel" onchange="loadPreset(this.value)">
-      <option value="">── テレビ・有料級プリセットを読み込む ──</option>
-      <optgroup label="バラエティ・情報番組">
-        <option value="var_std">バラエティ標準（白・黒縁）</option>
-        <option value="var_yel">バラエティ強調（黄・二重縁）</option>
-        <option value="var_red">インパクト強調（赤・白縁）</option>
-        <option value="var_twin">有料級二重縁テロップ</option>
-      </optgroup>
-      <optgroup label="ドキュメンタリー・インタビュー">
-        <option value="nhk_doc">NHK風クリーンテロップ</option>
-        <option value="doc_int">インタビュー字幕</option>
-        <option value="doc_cap">ロケーション・日時キャプション</option>
-      </optgroup>
-      <optgroup label="ニュース・報道">
-        <option value="news_lt">ニュース・ロウワーサード（青帯）</option>
-        <option value="news_br">速報テロップ（赤帯）</option>
-        <option value="news_scroll">速報スクロール（黄文字・黒帯）</option>
-      </optgroup>
-      <optgroup label="YouTube・SNS・映像制作">
-        <option value="yt_pop">YouTube ポップテロップ</option>
-        <option value="yt_thumb">サムネイル風ビッグテキスト</option>
-        <option value="cinema">シネマ風テロップ（グラデ）</option>
-        <option value="biz_clean">ビジネス・コーポレート</option>
-      </optgroup>
-    </select>
-  </div>
-</div>
 
 <!-- Analysis result panel (shown after auto-analyze) -->
 <div id="ana-result"></div>
@@ -1321,7 +1277,6 @@ const PRESETS = {
 
 function loadPreset(key){
   const p=PRESETS[key];if(!p)return;
-  $('sname').value=p.name;$('fname').value=key;
   $('ffam').value=p.font;$('custfr').style.display='none';
   $('fsz').value=p.size;syncR($('fsz'),'fszv');
   setAlign(p.align);
@@ -1364,7 +1319,7 @@ function collectData(){
   const c=S.colors;
   function n(v){return(v/255).toFixed(6)}
   return {
-    name:val('sname'),font:getFont(),size:num('fsz'),
+    name:(val('pvtxt')||'テロップスタイル').split('\n')[0].trim()||'テロップスタイル',font:getFont(),size:num('fsz'),
     bold:$('fb').classList.contains('active'),
     italic:$('fi2').classList.contains('active'),
     underline:$('fu').classList.contains('active'),
@@ -1682,7 +1637,7 @@ function buildReport(){
 }
 
 function exportFile(type){
-  const fname=(val('fname')||'telop').replace(/[\s\/\\:*?"<>|]/g,'_');
+  const fname=((val('pvtxt')||'telop').split('\n')[0].trim()||'telop').replace(/[\s\/\\:*?"<>|]/g,'_').slice(0,40);
   const map={
     prtextstyle:[buildPrtextstyle(),fname+'.prtextstyle','application/xml;charset=utf-8'],
     jsx:[buildJsx(),fname+'_apply.jsx','text/plain;charset=utf-8'],
