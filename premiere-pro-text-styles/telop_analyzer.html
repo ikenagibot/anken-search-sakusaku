@@ -219,6 +219,42 @@ select option{background:var(--bg0)}
   padding-top:7px;border-top:1px solid var(--bdr)}
 .eb-hint{font-size:9px;color:var(--dim);margin-top:-2px;margin-bottom:8px;
   padding-left:4px;line-height:1.5}
+
+/* Analysis result banner */
+.ana-banner{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(0,212,170,.06));
+  border:1.5px solid rgba(74,222,128,.3);border-radius:10px;
+  padding:12px 14px;margin:0 16px 12px;animation:fadeSlide .35s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.ana-title{font-size:11px;font-weight:800;color:var(--s);margin-bottom:9px;
+  display:flex;align-items:center;gap:6px}
+.ana-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.ana-item{background:rgba(0,0,0,.35);border-radius:7px;padding:7px 9px;
+  display:flex;align-items:center;gap:8px}
+.ana-swatch{width:22px;height:22px;border-radius:5px;flex-shrink:0;
+  border:1.5px solid rgba(255,255,255,.15)}
+.ana-label{font-size:9px;color:var(--dim);line-height:1.3;margin-bottom:1px}
+.ana-val{font-size:11px;font-weight:700;font-family:monospace;color:var(--txt)}
+.ana-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  border-radius:100px;font-size:9px;font-weight:700;margin-right:4px;margin-bottom:4px}
+.ana-badge.ok{background:rgba(74,222,128,.15);color:var(--s);border:1px solid rgba(74,222,128,.3)}
+.ana-badge.off{background:rgba(136,136,170,.1);color:var(--dim);border:1px solid rgba(136,136,170,.2)}
+.ana-badge.warn{background:rgba(250,204,21,.12);color:var(--w);border:1px solid rgba(250,204,21,.3)}
+.ana-hint{font-size:9px;color:var(--dim);line-height:1.5;margin-top:4px}
+
+/* Comparison strip */
+.cmp-strip{display:none;margin-top:8px;border-radius:9px;overflow:hidden;
+  border:1px solid var(--bdr);position:relative}
+.cmp-strip.show{display:block}
+.cmp-lbl{position:absolute;top:4px;left:6px;background:rgba(0,0,0,.7);
+  color:#fff;font-size:9px;padding:1px 6px;border-radius:4px;pointer-events:none}
+.cmp-lbl2{position:absolute;top:4px;right:6px;background:rgba(108,99,255,.8);
+  color:#fff;font-size:9px;padding:1px 6px;border-radius:4px;pointer-events:none}
+#cmp-canvas{width:100%;display:block}
+.cmp-btn{background:var(--bg3);border:1.5px solid var(--bdr);color:var(--dim);
+  padding:4px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-family:inherit;
+  transition:all .15s;margin-left:6px}
+.cmp-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+.cmp-btn:hover:not(.active){border-color:var(--acc3);color:var(--acc3)}
 </style>
 </head>
 <body>
@@ -293,6 +329,9 @@ select option{background:var(--bg0)}
   </div>
 </div>
 
+<!-- Analysis result panel (shown after auto-analyze) -->
+<div id="ana-result"></div>
+
 <!-- ── Section: カラー解析 ── -->
 <div class="acc">
   <div class="acc-h" onclick="toggleAcc(this)">
@@ -301,7 +340,7 @@ select option{background:var(--bg0)}
   </div>
   <div class="acc-body open">
     <div class="acc-inner">
-      <button class="abtn" id="abtn" disabled onclick="autoAnalyze()">✨ 主要カラーを自動検出</button>
+      <button class="abtn" id="abtn" disabled onclick="autoAnalyze()">🔬 テロップスタイルを自動解析して再現</button>
       <div class="palette" id="pal"></div>
       <p class="tip" style="margin-bottom:8px">チップをクリック → 現在選択中の色枠に設定。画像を直接クリックでも取得できます。</p>
       <div class="sec-title">取得済みカラー</div>
@@ -564,6 +603,11 @@ select option{background:var(--bg0)}
         <input type="text" id="pvtxt" value="サンプルテロップ" placeholder="プレビューテキスト" oninput="drawPreview()">
       </div>
       <div class="prev-wrap"><canvas id="pc"></canvas></div>
+      <div class="cmp-strip" id="cmp-strip">
+        <canvas id="cmp-canvas"></canvas>
+        <span class="cmp-lbl">元画像</span>
+        <span class="cmp-lbl2">再現</span>
+      </div>
       <div class="prev-bg-row">
         <label>背景:</label>
         <div class="bg-chip sel" style="background:#111" onclick="setPrevBg('#111',this)" title="黒"></div>
@@ -571,6 +615,7 @@ select option{background:var(--bg0)}
         <div class="bg-chip" style="background:#404060" onclick="setPrevBg('#404060',this)" title="暗青"></div>
         <div class="bg-chip" style="background:#1e6030" onclick="setPrevBg('#1e6030',this)" title="暗緑"></div>
         <div class="bg-chip" style="background:conic-gradient(#333 90deg,#555 90deg 180deg,#333 180deg 270deg,#555 270deg) 0/10px 10px" onclick="setPrevBg('transparent',this)" title="透過"></div>
+        <button class="cmp-btn" id="cmp-btn" onclick="toggleComparison()" title="元画像と並べて比較">元画像と比較</button>
       </div>
     </div>
   </div>
@@ -759,15 +804,27 @@ function onCp(m,h){const c=hexToRgb(h);setColor(m,c.r,c.g,c.b);drawPreview()}
 });
 
 // ─────────────────────────────────────────────
-// Auto analyze
+// Color helpers
+// ─────────────────────────────────────────────
+function colorDist(r1,g1,b1,r2,g2,b2){return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1-b2)**2)}
+function saturation(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx===0?0:(mx-mn)/mx}
+
+// ─────────────────────────────────────────────
+// Auto analyze — enhanced telop detection
 // ─────────────────────────────────────────────
 function autoAnalyze(){
   if(!S._img)return;
-  const d=ctx.getImageData(0,0,ic.width,ic.height).data;
-  const step=Math.max(1,Math.floor(d.length/4/3000));
+  const imgData=ctx.getImageData(0,0,ic.width,ic.height);
+  const d=imgData.data;
+  const W=ic.width,H=ic.height;
+
+  // ── 1. Sample pixels & cluster colors (15 clusters) ──
+  const step=Math.max(1,Math.floor(W*H/5000));
   const pts=[];
   for(let i=0;i<d.length;i+=4*step){if(d[i+3]<128)continue;pts.push([d[i],d[i+1],d[i+2]])}
-  const clusters=qCluster(pts,10);
+  const clusters=qCluster(pts,15);
+
+  // Rebuild palette
   const pal=$('pal');pal.innerHTML='';
   clusters.forEach(c=>{
     const hex=toHex(c[0],c[1],c[2]);
@@ -777,13 +834,133 @@ function autoAnalyze(){
     chip.addEventListener('click',()=>{const rgb=hexToRgb(hex);setColor(S.mode,rgb.r,rgb.g,rgb.b);drawPreview()});
     pal.appendChild(chip);
   });
-  if(clusters.length>0){
-    const byLuma=[...clusters].sort((a,b)=>luma(...b)-luma(...a));
-    setColor('fill',byLuma[0][0],byLuma[0][1],byLuma[0][2]);
-    if(byLuma.length>1)setColor('stroke1',byLuma[byLuma.length-1][0],byLuma[byLuma.length-1][1],byLuma[byLuma.length-1][2]);
-    if(byLuma.length>2)setColor('box',byLuma[byLuma.length-2][0],byLuma[byLuma.length-2][1],byLuma[byLuma.length-2][2]);
-    drawPreview();
+  if(!clusters.length)return;
+
+  // ── 2. Enrich with luminosity + saturation ──
+  const enriched=clusters.map(c=>({
+    r:c[0],g:c[1],b:c[2],
+    L:luma(c[0],c[1],c[2]),
+    sat:saturation(c[0],c[1],c[2])
+  })).sort((a,b)=>b.L-a.L);
+
+  // ── 3. Fill: prefer bright + saturated (yellow > red > white) ──
+  const brightPool=enriched.filter(c=>c.L>100);
+  const fill=brightPool.length
+    ?[...brightPool].sort((a,b)=>b.sat*b.L-a.sat*a.L)[0]
+    :enriched[0];
+
+  // ── 4. Dark colors → stroke candidates ──
+  const darkPool=enriched.filter(c=>c.L<70);
+  const stroke1=darkPool.length?darkPool[0]:enriched[enriched.length-1];
+
+  // Second distinct dark → stroke2
+  let stroke2=null;
+  for(const c of darkPool){
+    if(colorDist(c.r,c.g,c.b,stroke1.r,stroke1.g,stroke1.b)>55){stroke2=c;break}
   }
+
+  // ── 5. Shadow: dark + low saturation ──
+  const hasShadow=enriched.some(c=>c.L>3&&c.L<50&&c.sat<0.25);
+
+  // ── 6. Background box: medium-saturation non-text color ──
+  const boxPool=enriched.filter(c=>
+    c.L>=20&&c.L<=200&&c.sat>0.15&&
+    colorDist(c.r,c.g,c.b,fill.r,fill.g,fill.b)>80&&
+    colorDist(c.r,c.g,c.b,stroke1.r,stroke1.g,stroke1.b)>60
+  );
+  const boxColor=boxPool[0]||null;
+
+  // ── 7. Estimate font size from text pixel height ──
+  const fSize=estimateFontSize(d,W,H,fill);
+
+  // ── 8. Estimate stroke width ──
+  const sw1=Math.min(20,Math.max(4,Math.round(fSize*0.11)));
+  const sw2=stroke2?Math.min(16,Math.max(3,Math.round(fSize*0.08))):6;
+
+  // ── 9. Apply everything ──
+  setColor('fill',fill.r,fill.g,fill.b);
+  setColor('stroke1',stroke1.r,stroke1.g,stroke1.b);
+  if(stroke2)setColor('stroke2',stroke2.r,stroke2.g,stroke2.b);
+  if(boxColor)setColor('box',boxColor.r,boxColor.g,boxColor.b);
+
+  // Font size
+  if(fSize>0){$('fsz').value=fSize;syncR($('fsz'),'fszv')}
+
+  // Enable/disable effects
+  const hasStroke=darkPool.length>0&&stroke1.L<55;
+  $('st1-en').checked=hasStroke;
+  $('st2-en').checked=!!stroke2;
+  $('sh-en').checked=hasShadow;
+  if(hasShadow&&$('sh-ctrl'))$('sh-ctrl').style.display='block';
+
+  // Stroke widths
+  $('s1w').value=sw1;syncR($('s1w'),'s1w-v');
+  $('s2w').value=sw2;syncR($('s2w'),'s2w-v');
+
+  // ── 10. Show analysis result panel ──
+  showAnalysisResult({fill,stroke1,stroke2,hasShadow,fSize,hasStroke,
+    hasDouble:!!stroke2,boxColor,colorCount:clusters.length});
+
+  drawPreview();
+}
+
+// Estimate font size from text pixel height in image
+function estimateFontSize(data,W,H,fill){
+  const thresh=65;
+  const margin=Math.floor(W*0.05);
+  let minY=-1,maxY=-1;
+  for(let y=0;y<H;y++){
+    for(let x=margin;x<W-margin;x++){
+      const i=(y*W+x)*4;
+      if(data[i+3]<128)continue;
+      if(colorDist(data[i],data[i+1],data[i+2],fill.r,fill.g,fill.b)<thresh){
+        if(minY<0)minY=y;
+        maxY=y;break;
+      }
+    }
+  }
+  if(minY<0||maxY===minY)return 72;
+  // Scale back: S._sc shrinks the canvas image from original
+  const origH=(maxY-minY)/S._sc;
+  // Premiere Pro 1080p: ~72pt ≈ 96px → pt ≈ px * 0.75
+  return Math.min(200,Math.max(28,Math.round(origH*0.75)));
+}
+
+// Show the analysis result banner
+function showAnalysisResult(r){
+  const el=$('ana-result');if(!el)return;
+  const hex=(c)=>toHex(c.r,c.g,c.b);
+  const badge=(on,label)=>`<span class="ana-badge ${on?'ok':'off'}">${on?'✓':'—'} ${label}</span>`;
+
+  el.innerHTML=`<div class="ana-banner">
+    <div class="ana-title">✨ テロップ解析完了 — ${r.colorCount}色を検出</div>
+    <div class="ana-grid">
+      <div class="ana-item">
+        <div class="ana-swatch" style="background:${hex(r.fill)}"></div>
+        <div><div class="ana-label">文字色 (Fill)</div><div class="ana-val">${hex(r.fill)}</div></div>
+      </div>
+      <div class="ana-item">
+        <div class="ana-swatch" style="background:${hex(r.stroke1)}"></div>
+        <div><div class="ana-label">縁取り色</div><div class="ana-val">${hex(r.stroke1)}</div></div>
+      </div>
+      ${r.stroke2?`<div class="ana-item">
+        <div class="ana-swatch" style="background:${hex(r.stroke2)}"></div>
+        <div><div class="ana-label">縁取り2（外側）</div><div class="ana-val">${hex(r.stroke2)}</div></div>
+      </div>`:''}
+      ${r.boxColor?`<div class="ana-item">
+        <div class="ana-swatch" style="background:${hex(r.boxColor)}"></div>
+        <div><div class="ana-label">背景ボックス</div><div class="ana-val">${hex(r.boxColor)}</div></div>
+      </div>`:''}
+      <div class="ana-item" style="grid-column:${(!r.stroke2&&!r.boxColor)?'1/-1':'auto'}">
+        <div class="ana-swatch" style="background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--acc3)">${r.fSize}</div>
+        <div><div class="ana-label">推定フォントサイズ</div><div class="ana-val">${r.fSize} pt</div></div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px">
+      ${badge(r.hasStroke,'縁取り')}${badge(r.hasDouble,'二重縁')}${badge(r.hasShadow,'シャドウ')}${badge(!!r.boxColor,'背景帯')}
+    </div>
+    <div class="ana-hint">右パネルで各パラメーターを微調整し、「元画像と比較」ボタンで再現度を確認してください</div>
+  </div>`;
 }
 
 function qCluster(pts,k){
@@ -1476,8 +1653,60 @@ function exportFile(type){
 }
 
 // ─────────────────────────────────────────────
+// Comparison mode
+// ─────────────────────────────────────────────
+function toggleComparison(){
+  if(!S._img){alert('先に画像を読み込んでください');return}
+  const strip=$('cmp-strip'),btn=$('cmp-btn');
+  const show=!strip.classList.contains('show');
+  strip.classList.toggle('show',show);
+  btn.classList.toggle('active',show);
+  if(show)renderComparison();
+}
+
+function renderComparison(){
+  if(!S._img)return;
+  const cc=$('cmp-canvas');
+  const previewCanvas=$('pc');
+  const W=previewCanvas.width,H=previewCanvas.height;
+  const DPR=window.devicePixelRatio||1;
+  const cssW=Math.round(W/DPR),cssH=Math.round(H/DPR);
+
+  // Side-by-side: original (cropped to same aspect) | preview
+  cc.width=(cssW*2)*DPR;cc.height=cssH*DPR;
+  cc.style.width=cssW*2+'px';cc.style.height=cssH+'px';
+  const cx=cc.getContext('2d');
+  cx.setTransform(DPR,0,0,DPR,0,0);
+
+  // Left half — original image cropped/scaled to match preview height
+  const img=S._img;
+  const aspect=cssW/cssH;
+  const srcH=img.height;
+  const srcW=Math.min(img.width,srcH*aspect);
+  const srcX=(img.width-srcW)/2;
+  cx.drawImage(img,srcX,0,srcW,srcH,0,0,cssW,cssH);
+
+  // Divider
+  cx.strokeStyle='rgba(255,255,255,.4)';cx.lineWidth=1;
+  cx.beginPath();cx.moveTo(cssW,0);cx.lineTo(cssW,cssH);cx.stroke();
+
+  // Right half — the preview canvas content
+  cx.drawImage(previewCanvas,0,0,W,H,cssW,0,cssW,cssH);
+}
+
+// Hook into drawPreview to keep comparison in sync
+const _origDrawPreview=drawPreview;
+// Wrap after definition — we'll call renderComparison after each draw
+const _drawPreviewOrig=window.drawPreview;
+
+// ─────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────
+const _origDraw=drawPreview;
+drawPreview=function(){
+  _origDraw();
+  if($('cmp-strip').classList.contains('show'))renderComparison();
+};
 drawPreview();
 </script>
 </body>
