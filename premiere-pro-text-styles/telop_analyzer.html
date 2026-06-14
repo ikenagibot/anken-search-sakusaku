@@ -53,6 +53,16 @@ body{background:var(--bg0);color:var(--txt);
 .mbtn.active{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
 .mhint{margin-left:auto;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:5px}
 .cur-sw{width:16px;height:16px;border-radius:50%;border:2px solid #fff;display:inline-block}
+/* Region selection */
+#sel-ov{position:absolute;top:0;left:0;pointer-events:none;display:none}
+.sel-bar{background:var(--bg2);padding:6px 12px;display:none;
+  align-items:center;gap:6px;border-top:1px solid var(--bdr);flex-shrink:0;flex-wrap:wrap}
+.smode-btn{padding:4px 12px;border-radius:20px;border:1.5px solid var(--bdr);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:10px;font-weight:600;
+  font-family:inherit;transition:all .15s}
+.smode-btn:hover{border-color:var(--acc3);color:var(--acc3)}
+.smode-btn.active{background:var(--acc3);border-color:var(--acc3);color:#000}
+.sel-hint{font-size:10px;color:var(--acc3);margin-left:4px;flex:1}
 
 /* ── Right panel ── */
 .right{background:var(--bg1);overflow-y:auto;display:flex;flex-direction:column}
@@ -277,7 +287,12 @@ select option{background:var(--bg0)}
     <div class="dz-sub">または<b>クリック/Ctrl+V</b>で画像を読込<br>PNG・JPG・WEBP | ブラウザ内処理・外部送信なし</div>
     <input type="file" id="fi" accept="image/*" style="display:none">
   </div>
-  <div class="ca" id="ca"><canvas id="ic"></canvas></div>
+  <div class="ca" id="ca"><canvas id="ic"></canvas><canvas id="sel-ov"></canvas></div>
+  <div class="sel-bar" id="sel-bar">
+    <button class="smode-btn active" id="mode-pick" onclick="setSelMode('pick')">🎯 色を取得</button>
+    <button class="smode-btn" id="mode-sel" onclick="setSelMode('sel')">✂️ 領域を選択して解析</button>
+    <span class="sel-hint" id="sel-hint">ドラッグでテキスト領域を囲むと自動解析します</span>
+  </div>
   <div class="mbar" id="mb">
     <span style="font-size:10px;color:var(--dim)">取得する色:</span>
     <button class="mbtn active" data-m="fill">📝 文字</button>
@@ -691,6 +706,7 @@ function loadImg(file){
     ctx.drawImage(img,0,0,ic.width,ic.height);
     S._img=img;S._sc=sc;
     dz.style.display='none';ca.style.display='block';mb.style.display='flex';
+    $('sel-bar').style.display='flex';
     $('abtn').disabled=false;
     URL.revokeObjectURL(url);
     autoAnalyze();
@@ -706,6 +722,7 @@ function loadImg(file){
 // Canvas sampling
 // ─────────────────────────────────────────────
 ic.addEventListener('click',e=>{
+  if(S.selMode!=='pick')return;
   const rect=ic.getBoundingClientRect();
   const x=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
   const y=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
@@ -714,13 +731,25 @@ ic.addEventListener('click',e=>{
 });
 
 ic.addEventListener('mousemove',e=>{
+  if(S.selMode!=='pick'){
+    // sel mode: show resize cursor while dragging
+    if(S.drag&&S.drag.on){
+      const rect=ic.getBoundingClientRect();
+      S.drag.x1=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
+      S.drag.y1=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
+      drawSelOverlay();
+      const rw=Math.abs(S.drag.x1-S.drag.x0),rh=Math.abs(S.drag.y1-S.drag.y0);
+      $('sel-hint').textContent=`${rw}×${rh}px ← ドラッグ中…`;
+    }
+    mag.style.display='none';mgl.style.display='none';
+    return;
+  }
   const rect=ic.getBoundingClientRect();
   const xi=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
   const yi=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
   const px=ctx.getImageData(Math.max(0,xi),Math.max(0,yi),1,1).data;
   const hex=toHex(px[0],px[1],px[2]);
   $('csw').style.background=hex;$('chx').textContent=hex;
-  // magnifier
   const mx=e.clientX+18,my=e.clientY-50;
   mag.style.cssText=`display:block;left:${mx}px;top:${my}px;position:fixed;width:80px;height:80px;border-radius:50%;border:2px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.9);pointer-events:none;z-index:999`;
   mgl.style.cssText=`display:block;left:${mx}px;top:${my+84}px;position:fixed;background:rgba(0,0,0,.88);color:#fff;padding:2px 7px;border-radius:5px;font-size:10px;font-family:monospace;pointer-events:none;z-index:999;white-space:nowrap`;
@@ -733,7 +762,10 @@ ic.addEventListener('mousemove',e=>{
   magX.beginPath();magX.moveTo(0,40);magX.lineTo(80,40);magX.stroke();
   mag.style.background=`url(${magC.toDataURL()}) 0/80px 80px`;
 });
-ic.addEventListener('mouseleave',()=>{mag.style.display='none';mgl.style.display='none'});
+ic.addEventListener('mouseleave',()=>{
+  mag.style.display='none';mgl.style.display='none';
+  if(S.drag&&S.drag.on){S.drag.on=false;}
+});
 
 // Mode buttons
 document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>{
@@ -777,13 +809,85 @@ function colorDist(r1,g1,b1,r2,g2,b2){return Math.sqrt((r1-r2)**2+(g1-g2)**2+(b1
 function saturation(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx===0?0:(mx-mn)/mx}
 
 // ─────────────────────────────────────────────
+// Region selection
+// ─────────────────────────────────────────────
+S.selMode='pick';
+S.drag={on:false,x0:0,y0:0,x1:0,y1:0};
+const selOv=$('sel-ov');
+const sovCtx=selOv.getContext('2d');
+
+function setSelMode(m){
+  S.selMode=m;
+  $('mode-pick').classList.toggle('active',m==='pick');
+  $('mode-sel').classList.toggle('active',m==='sel');
+  ic.style.cursor=m==='sel'?'crosshair':'crosshair';
+  selOv.style.display=m==='sel'?'block':'none';
+  if(m==='pick'){clearSelOverlay();}
+  $('sel-hint').textContent=m==='sel'?'ドラッグでテキスト領域を囲むと自動解析します':'';
+}
+
+function syncSelOv(){
+  selOv.width=ic.width;selOv.height=ic.height;
+  selOv.style.width=(ic.style.width||ic.width+'px');
+  selOv.style.height=(ic.style.height||ic.height+'px');
+}
+
+function clearSelOverlay(){sovCtx.clearRect(0,0,selOv.width,selOv.height);}
+
+function drawSelOverlay(){
+  syncSelOv();
+  const {x0,y0,x1,y1}=S.drag;
+  const rx=Math.min(x0,x1),ry=Math.min(y0,y1);
+  const rw=Math.abs(x1-x0),rh=Math.abs(y1-y0);
+  sovCtx.clearRect(0,0,selOv.width,selOv.height);
+  // Dim outside selection
+  sovCtx.fillStyle='rgba(0,0,0,0.45)';
+  sovCtx.fillRect(0,0,selOv.width,selOv.height);
+  sovCtx.clearRect(rx,ry,rw,rh);
+  // Dashed border
+  sovCtx.strokeStyle='#4ade80';sovCtx.lineWidth=2;
+  sovCtx.setLineDash([6,3]);sovCtx.strokeRect(rx+1,ry+1,rw-2,rh-2);sovCtx.setLineDash([]);
+  // Corner handles
+  const hs=8;sovCtx.fillStyle='#4ade80';
+  [[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([cx,cy])=>sovCtx.fillRect(cx-hs/2,cy-hs/2,hs,hs));
+}
+
+// Drag events for region selection
+ic.addEventListener('mousedown',e=>{
+  if(S.selMode!=='sel')return;
+  e.preventDefault();
+  syncSelOv();selOv.style.display='block';
+  const rect=ic.getBoundingClientRect();
+  const x=Math.round((e.clientX-rect.left)*(ic.width/rect.width));
+  const y=Math.round((e.clientY-rect.top)*(ic.height/rect.height));
+  S.drag={on:true,x0:x,y0:y,x1:x,y1:y};
+});
+
+ic.addEventListener('mouseup',e=>{
+  if(S.selMode!=='sel'||!S.drag.on)return;
+  S.drag.on=false;
+  const {x0,y0,x1,y1}=S.drag;
+  const rx=Math.min(x0,x1),ry=Math.min(y0,y1);
+  const rw=Math.abs(x1-x0),rh=Math.abs(y1-y0);
+  if(rw<10||rh<10){clearSelOverlay();$('sel-hint').textContent='範囲が小さすぎます。もう少し広く選択してください。';return;}
+  drawSelOverlay();
+  $('sel-hint').textContent='⏳ 解析中…';
+  setTimeout(()=>{
+    autoAnalyze({x:rx,y:ry,w:rw,h:rh});
+    $('sel-hint').textContent=`✅ ${rw}×${rh}px の領域を解析しました — 別の領域をドラッグで再解析`;
+  },30);
+});
+
+// ─────────────────────────────────────────────
 // Auto analyze — enhanced telop detection
 // ─────────────────────────────────────────────
-function autoAnalyze(){
+function autoAnalyze(region){
   if(!S._img)return;
-  const imgData=ctx.getImageData(0,0,ic.width,ic.height);
+  const rx=region?region.x:0,ry=region?region.y:0;
+  const rw=region?region.w:ic.width,rh=region?region.h:ic.height;
+  const imgData=ctx.getImageData(rx,ry,rw,rh);
   const d=imgData.data;
-  const W=ic.width,H=ic.height;
+  const W=rw,H=rh;
 
   // ── 1. Sample pixels & cluster colors (15 clusters) ──
   const step=Math.max(1,Math.floor(W*H/5000));
