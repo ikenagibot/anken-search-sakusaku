@@ -9,7 +9,7 @@
 :root{
   --bg0:#0a0a18;--bg1:#10102a;--bg2:#161633;--bg3:#1c1c40;--bg4:#22224d;
   --acc:#7b68ff;--acc2:#ff6b8a;--acc3:#4ecdc4;--acc4:#ffd700;
-  --txt:#e8e8f6;--dim:#7070a0;--bdr:#252550;
+  --txt:#e8e8f6;--dim:#9090b8;--bdr:#252550;
   --s:#4ade80;--w:#facc15;--e:#f87171;
 }
 body{background:var(--bg0);color:var(--txt);
@@ -577,7 +577,7 @@ select option{background:var(--bg0)}
 </div>
 
 <!-- ── Export ── -->
-<div style="padding:14px 16px 20px">
+<div style="padding:14px 16px 20px;position:sticky;bottom:0;background:var(--bg1);z-index:10;border-top:1px solid var(--bdr)">
 
   <div class="guide-box">
     <div class="guide-title">🎬 Premiere Pro へのインポート手順</div>
@@ -682,7 +682,12 @@ function loadImg(file){
     $('abtn').disabled=false;
     URL.revokeObjectURL(url);
     autoAnalyze();
-  };img.src=url;
+  };
+  img.onerror=()=>{
+    URL.revokeObjectURL(url);
+    alert('画像を読み込めませんでした。\nPNG・JPG・WEBP形式の画像を使用してください。');
+  };
+  img.src=url;
 }
 
 // ─────────────────────────────────────────────
@@ -917,9 +922,8 @@ function drawPreview(){
   }
 
   function clearShadow(){pctx.shadowColor='transparent';pctx.shadowBlur=0;pctx.shadowOffsetX=0;pctx.shadowOffsetY=0}
-
-  // Shadow on outermost layer
-  if(shEn){
+  function setShadow(){
+    if(!shEn)return;
     const rad=(shAn-90)*Math.PI/180;
     pctx.shadowColor=`rgba(${shc.r},${shc.g},${shc.b},${shOp})`;
     pctx.shadowBlur=shBl;
@@ -927,8 +931,12 @@ function drawPreview(){
     pctx.shadowOffsetY=Math.sin(rad)*shDs;
   }
 
+  // Determine outermost visible layer so shadow lands only on it
+  const outermost=st2En&&st2W>0?'st2':st1En&&st1W>0?'st1':'fill';
+
   // Stroke 2 (outer - drawn with combined width)
   if(st2En&&st2W>0){
+    if(outermost==='st2')setShadow();
     pctx.save();pctx.globalAlpha=st2O;
     pctx.strokeStyle=`rgb(${s2c.r},${s2c.g},${s2c.b})`;
     pctx.lineWidth=(st1En?st1W+st2W:st2W)*2;
@@ -938,16 +946,17 @@ function drawPreview(){
 
   // Stroke 1 (inner)
   if(st1En&&st1W>0){
+    if(outermost==='st1')setShadow();
     pctx.save();pctx.globalAlpha=st1O;
     pctx.strokeStyle=`rgb(${s1c.r},${s1c.g},${s1c.b})`;
     pctx.lineWidth=st1W*2;pctx.lineJoin='round';
-    if(!st2En){}// shadow already on, clear after
     pctx.strokeText(displayText,tx,ty);
     pctx.restore();clearShadow();
   }
 
   // Fill
   if(fillEn){
+    if(outermost==='fill')setShadow();
     pctx.save();pctx.globalAlpha=fillOp;
     if(S.fillType==='solid'){
       pctx.fillStyle=`rgb(${fc.r},${fc.g},${fc.b})`;
@@ -960,8 +969,8 @@ function drawPreview(){
       grad.addColorStop(1,`rgb(${fc2.r},${fc2.g},${fc2.b})`);
       pctx.fillStyle=grad;
     }
-    clearShadow();
     pctx.fillText(displayText,tx,ty);
+    clearShadow();
     // underline
     if(underline){
       pctx.strokeStyle=pctx.fillStyle;pctx.lineWidth=Math.max(1,dispSz/20);
@@ -1160,7 +1169,7 @@ function collectData(){
 function buildPrtextstyle(){
   const d=collectData();
   function n(v){return(v/255).toFixed(6)}
-  function ex(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function ex(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
   const alignNum={left:0,center:1,right:2}[d.align]??1;
   const isGrad=d.fillType!=='solid';
   const gradLines=isGrad?`
@@ -1253,6 +1262,8 @@ function buildPrtextstyle(){
 
 function buildJsx(){
   const d=collectData();
+  // Escape string values for embedding inside JSX double-quoted string literals
+  const jsStr=s=>String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
   const fR=(d.fill.r/255).toFixed(4),fG=(d.fill.g/255).toFixed(4),fB=(d.fill.b/255).toFixed(4);
   const s1R=(d.st1.r/255).toFixed(4),s1G=(d.st1.g/255).toFixed(4),s1B=(d.st1.b/255).toFixed(4);
   const s2R=(d.st2.r/255).toFixed(4),s2G=(d.st2.g/255).toFixed(4),s2B=(d.st2.b/255).toFixed(4);
@@ -1260,7 +1271,7 @@ function buildJsx(){
   const bxR2=(d.bx.r/255).toFixed(4),bxG2=(d.bx.g/255).toFixed(4),bxB2=(d.bx.b/255).toFixed(4);
   return `#target "premierepro"
 /**
- * テロップスタイル適用スクリプト: ${d.name}
+ * テロップスタイル適用スクリプト: ${jsStr(d.name)}
  * テロップスタイル解析ツール Premium 生成 ${new Date().toLocaleString()}
  *
  * 使い方:
@@ -1270,7 +1281,7 @@ function buildJsx(){
  */
 (function(){
   var D={
-    name:"${d.name}",font:"${d.font}",size:${d.size},
+    name:"${jsStr(d.name)}",font:"${jsStr(d.font)}",size:${d.size},
     bold:${d.bold},italic:${d.italic},allcaps:${d.allcaps},
     align:"${d.align}",tracking:${d.trk},leading:${d.ldg},
     fillHex:"${d.fill.hex}",fR:${fR},fG:${fG},fB:${fB},fillOp:${d.fillOp},fillType:"${d.fillType}",
