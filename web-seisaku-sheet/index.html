@@ -689,13 +689,26 @@ function renderContent(){
     });
   });
   // bind copy buttons
+  function copyText(btn,text){
+    if(navigator.clipboard&&window.isSecureContext){
+      navigator.clipboard.writeText(text).then(()=>copyDone(btn)).catch(()=>copyFallback(btn,text));
+    }else{copyFallback(btn,text);}
+  }
+  function copyFallback(btn,text){
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');copyDone(btn);}
+    catch(e){alert('コピーに失敗しました。テキストを手動で選択してください。');}
+    document.body.removeChild(ta);
+  }
+  function copyDone(btn){
+    btn.textContent='✓ コピーしました';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 コピー';btn.classList.remove('copied')},2000);
+  }
   document.querySelectorAll('.tmpl-copy').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const pre=btn.previousElementSibling;
-      navigator.clipboard.writeText(pre.textContent).then(()=>{
-        btn.textContent='✓ コピーしました';btn.classList.add('copied');
-        setTimeout(()=>{btn.textContent='📋 コピー';btn.classList.remove('copied')},2000);
-      });
+      copyText(btn,btn.previousElementSibling.textContent);
     });
   });
 }
