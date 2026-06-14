@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Web制作手順書シート — 受注〜納品 完全フロー</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#08080f;--bg1:#0f0f1e;--bg2:#14142a;--bg3:#1a1a35;--bg4:#20203f;
+  --acc:#6c63ff;--acc2:#ff6b9d;--acc3:#00d4aa;--acc4:#ffd93d;--acc5:#ff922b;
+  --txt:#e4e4f4;--dim:#8888aa;--bdr:#222244;
+  --ok:#4ade80;--warn:#facc15;--err:#f87171;
+  --ai:#7c3aed;--ai-bg:rgba(124,58,237,.12);--ai-bdr:rgba(124,58,237,.35);
+  --tip:#0369a1;--tip-bg:rgba(3,105,161,.1);
+}
+body{background:var(--bg0);color:var(--txt);
+  font-family:-apple-system,'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif;
+  font-size:13px;line-height:1.6;min-height:100vh}
+
+/* ── Header ── */
+.hd{background:linear-gradient(135deg,#06061a,#10104a);
+  padding:16px 24px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.hd-icon{font-size:28px}
+.hd-info{flex:1}
+.hd-title{font-size:18px;font-weight:800;letter-spacing:.3px}
+.hd-sub{font-size:11px;color:var(--dim);margin-top:2px}
+.hd-badges{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.badge{padding:3px 12px;border-radius:100px;font-size:10px;font-weight:700}
+.badge-acc{background:var(--acc);color:#fff}
+.badge-ok{background:var(--ok);color:#000}
+.badge-warn{background:var(--warn);color:#000}
+
+/* ── Overall Progress ── */
+.overall{background:var(--bg2);padding:10px 24px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:16px}
+.ov-label{font-size:11px;color:var(--dim);white-space:nowrap}
+.ov-bar{flex:1;height:8px;background:var(--bg4);border-radius:100px;overflow:hidden}
+.ov-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc3));
+  border-radius:100px;transition:width .4s ease}
+.ov-pct{font-size:13px;font-weight:700;color:var(--acc3);font-family:monospace;
+  white-space:nowrap;min-width:48px;text-align:right}
+.ov-count{font-size:11px;color:var(--dim);white-space:nowrap}
+.ov-reset{background:none;border:1px solid var(--bdr);color:var(--dim);
+  padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;
+  transition:all .15s}
+.ov-reset:hover{border-color:var(--err);color:var(--err)}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 96px)}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--bg1);border-right:1px solid var(--bdr);
+  position:sticky;top:96px;height:calc(100vh - 96px);overflow-y:auto;padding:14px 0}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+.ph-item{padding:9px 16px;cursor:pointer;transition:background .15s;
+  display:flex;align-items:center;gap:10px;border-left:3px solid transparent}
+.ph-item:hover{background:var(--bg3)}
+.ph-item.active{background:var(--bg3);border-left-color:var(--acc)}
+.ph-num{width:22px;height:22px;border-radius:50%;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;font-size:10px;
+  font-weight:700;flex-shrink:0;color:var(--dim)}
+.ph-item.active .ph-num{background:var(--acc);color:#fff}
+.ph-item.done .ph-num{background:var(--ok);color:#000}
+.ph-info{flex:1;min-width:0}
+.ph-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-prog{font-size:9px;color:var(--dim);margin-top:2px}
+.ph-mini-bar{width:100%;height:3px;background:var(--bg4);border-radius:100px;margin-top:4px;overflow:hidden}
+.ph-mini-fill{height:100%;background:var(--acc3);border-radius:100px;transition:width .3s}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--bdr);margin-top:8px}
+.sf-label{font-size:10px;color:var(--dim);margin-bottom:4px}
+.sf-tip{font-size:10px;color:var(--acc4);line-height:1.5}
+
+/* ── Main ── */
+.main{background:var(--bg0);overflow-y:auto;padding:0}
+.phase-panel{display:none;padding:24px}
+.phase-panel.active{display:block}
+
+/* Phase header */
+.ph-hd{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;
+  padding-bottom:16px;border-bottom:1px solid var(--bdr)}
+.ph-hd-num{width:44px;height:44px;border-radius:12px;background:var(--acc);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  font-weight:800;color:#fff;flex-shrink:0}
+.ph-hd-info{flex:1}
+.ph-hd-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.ph-hd-desc{font-size:12px;color:var(--dim)}
+.ph-hd-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.meta-tag{padding:2px 9px;border-radius:100px;font-size:10px;font-weight:600;
+  border:1px solid var(--bdr);color:var(--dim)}
+.meta-tag.time{border-color:var(--acc);color:var(--acc)}
+.meta-tag.tasks{border-color:var(--acc3);color:var(--acc3)}
+.ph-hd-prog{text-align:right;flex-shrink:0}
+.ph-pct-big{font-size:28px;font-weight:800;color:var(--acc3);line-height:1;font-family:monospace}
+.ph-pct-label{font-size:10px;color:var(--dim)}
+
+/* Section */
+.section{margin-bottom:20px}
+.section-title{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--bdr)}
+
+/* Task list */
+.task-list{display:flex;flex-direction:column;gap:4px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;
+  border-radius:9px;border:1.5px solid var(--bdr);background:var(--bg2);
+  cursor:pointer;transition:all .15s;user-select:none}
+.task:hover{border-color:var(--acc);background:var(--bg3)}
+.task.done{background:rgba(74,222,128,.06);border-color:rgba(74,222,128,.25)}
+.task.done .task-text{text-decoration:line-through;color:var(--dim)}
+.task-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--bdr);
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;background:var(--bg4)}
+.task.done .task-cb{background:var(--ok);border-color:var(--ok)}
+.task-cb-icon{font-size:11px;display:none}
+.task.done .task-cb-icon{display:block}
+.task-body{flex:1;min-width:0}
+.task-text{font-size:12px;line-height:1.5}
+.task-sub{font-size:10px;color:var(--dim);margin-top:2px;line-height:1.5}
+.task-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.ttag{padding:1px 7px;border-radius:100px;font-size:9px;font-weight:600}
+.ttag-ai{background:rgba(124,58,237,.2);color:#c084fc;border:1px solid rgba(124,58,237,.3)}
+.ttag-imp{background:rgba(255,147,43,.15);color:var(--acc5);border:1px solid rgba(255,147,43,.3)}
+.ttag-tmpl{background:rgba(0,212,170,.1);color:var(--acc3);border:1px solid rgba(0,212,170,.3)}
+.ttag-note{background:rgba(136,136,170,.1);color:var(--dim);border:1px solid rgba(136,136,170,.2)}
+
+/* AI Tip box */
+.ai-box{background:var(--ai-bg);border:1.5px solid var(--ai-bdr);border-radius:10px;
+  padding:14px 16px;margin-bottom:16px}
+.ai-box-title{font-size:11px;font-weight:700;color:#c084fc;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px}
+.ai-tip{display:flex;gap:9px;margin-bottom:8px;font-size:11px;line-height:1.55;color:var(--txt)}
+.ai-tip:last-child{margin-bottom:0}
+.ai-tip-icon{flex-shrink:0;width:18px;height:18px;background:rgba(124,58,237,.3);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px}
+.ai-tip b{color:#e879f9}
+
+/* Template box */
+.tmpl-box{border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.tmpl-hd{background:var(--bg3);padding:9px 14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;user-select:none}
+.tmpl-hd:hover{background:var(--bg4)}
+.tmpl-title{font-size:11px;font-weight:700;display:flex;align-items:center;gap:7px}
+.tmpl-arrow{font-size:10px;color:var(--dim);transition:transform .2s}
+.tmpl-body{display:none;padding:14px;background:var(--bg0)}
+.tmpl-body.open{display:block}
+.tmpl-content{font-size:11px;line-height:1.7;color:var(--txt);white-space:pre-wrap;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;
+  padding:12px 14px;font-family:monospace;margin-bottom:8px;max-height:280px;overflow-y:auto}
+.tmpl-copy{background:var(--acc);color:#fff;border:none;padding:6px 16px;
+  border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;
+  transition:opacity .15s}
+.tmpl-copy:hover{opacity:.85}
+.tmpl-copy.copied{background:var(--ok);color:#000}
+
+/* Info / warning box */
+.info-box{display:flex;gap:10px;padding:12px 14px;border-radius:9px;margin-bottom:14px;
+  font-size:11px;line-height:1.55}
+.info-box.warn{background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.3);color:var(--txt)}
+.info-box.ok{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.25);color:var(--txt)}
+.info-box.tip{background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.3);color:var(--txt)}
+.info-icon{font-size:16px;flex-shrink:0}
+.info-box b{color:var(--acc4)}
+
+/* Pricing table */
+.price-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+.price-table th{background:var(--bg3);padding:8px 12px;text-align:left;font-size:10px;
+  font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);
+  border-bottom:1px solid var(--bdr)}
+.price-table td{padding:9px 12px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.price-table tr:last-child td{border-bottom:none}
+.price-table tr:hover td{background:var(--bg2)}
+.price-range{font-weight:700;color:var(--acc4);font-family:monospace}
+
+/* Checklist summary */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.summary-card{background:var(--bg2);border:1.5px solid var(--bdr);border-radius:10px;
+  padding:12px 14px;text-align:center}
+.sc-num{font-size:24px;font-weight:800;font-family:monospace;line-height:1}
+.sc-label{font-size:10px;color:var(--dim);margin-top:4px}
+.sc-bar{width:100%;height:4px;background:var(--bg4);border-radius:100px;
+  margin-top:8px;overflow:hidden}
+.sc-fill{height:100%;border-radius:100px;transition:width .4s}
+
+/* Print */
+@media print{
+  .sidebar,.overall .ov-reset,.tmpl-copy,.hd-badges{display:none}
+  .layout{grid-template-columns:1fr}
+  .phase-panel{display:block!important;page-break-before:always}
+  .phase-panel:first-child{page-break-before:auto}
+  body{background:#fff;color:#000}
+  .hd{background:#fff;color:#000;border-bottom:2px solid #000}
+  .task,.ai-box,.tmpl-box{border-color:#ccc}
+}
+
+/* Responsive */
+@media(max-width:680px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-icon">🌐</div>
+  <div class="hd-info">
+    <div class="hd-title">Web制作手順書シート</div>
+    <div class="hd-sub">受注〜納品 完全フロー | 7フェーズ・60タスク | AI活用ポイント付き</div>
+  </div>
+  <div class="hd-badges">
+    <span class="badge badge-acc">for Webクリエイター</span>
+    <button onclick="window.print()" style="background:var(--bg3);border:1px solid var(--bdr);color:var(--dim);padding:4px 12px;border-radius:7px;cursor:pointer;font-size:10px;font-family:inherit">🖨 印刷</button>
+  </div>
+</div>
+
+<div class="overall">
+  <span class="ov-label">全体進捗</span>
+  <div class="ov-bar"><div class="ov-fill" id="ov-fill" style="width:0%"></div></div>
+  <span class="ov-pct" id="ov-pct">0%</span>
+  <span class="ov-count" id="ov-count">0 / 60 タスク</span>
+  <button class="ov-reset" onclick="resetAll()">リセット</button>
+</div>
+
+<div class="layout">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div id="ph-nav"></div>
+  <div class="sidebar-footer">
+    <div class="sf-label">💡 制作のコツ</div>
+    <div class="sf-tip">ヒアリングに全体工数の30%を使うと後工程の手戻りが激減する</div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main" id="main-content"></div>
+
+</div><!-- /layout -->
+
+<script>
+'use strict';
+
+// ── Phase & Task Data ─────────────────────────────────────────────
+const PHASES = [
+{
+  id:'p1', num:1, icon:'📋', name:'受注・ヒアリング',
+  color:'#6c63ff',
+  desc:'クライアントとの初回接触から契約・着手金受領まで。ここでの情報収集が全工程の品質を決める。',
+  time:'1〜3日', taskCount:10,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ1',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>で商談後のヒアリング議事録を自動生成。「以下のメモを構造化してください」と貼るだけで清書完了'},
+      {icon:'✨',text:'<b>ChatGPT</b>に業種・規模・目的を伝えて<b>見積金額の相場</b>を確認。単価交渉の根拠として活用'},
+      {icon:'✨',text:'<b>ChatGPT</b>で<b>提案書・企画書</b>の文章を生成。骨格をAIに作らせて自分は添削に集中する'},
+    ]
+  },
+  tasks:[
+    {id:'t1_1',text:'初回問い合わせ対応（24時間以内返信）',sub:'レスが速いだけで受注率が大きく変わる。テンプレ返信を用意しておく',tags:['imp']},
+    {id:'t1_2',text:'オンライン商談の日程調整',sub:'Zoom/Google Meet のURLを事前に用意。Calendlyで自動日程調整も可',tags:['tmpl']},
+    {id:'t1_3',text:'ヒアリングシート（25項目）を事前送付',sub:'目的・ターゲット・デザインイメージ・機能・予算・納期の6大要素を確定させる',tags:['imp','tmpl']},
+    {id:'t1_4',text:'オンライン商談実施・ヒアリング',sub:'画面共有でヒアリングシートを一緒に確認しながら進める。録画許可を取って議事録に活用',tags:['ai']},
+    {id:'t1_5',text:'目的・ターゲット・KPIを書面で確定',sub:'「問い合わせ月10件増」など数値目標があると後のSEO・CV設計に役立つ',tags:['imp']},
+    {id:'t1_6',text:'参考サイト3〜5件をクライアントから収集',sub:'「好きなサイト」「嫌いなサイト」両方聞くとデザイン方向性がブレない',tags:[]},
+    {id:'t1_7',text:'機能要件を確定（フォーム/EC/予約等）',sub:'追加機能は追加費用を明示。スコープクリープ防止の重要ポイント',tags:['imp']},
+    {id:'t1_8',text:'予算・納期を合意',sub:'予算が低い場合は機能を絞るか、テンプレート案を提示して合意を取る',tags:['imp']},
+    {id:'t1_9',text:'見積書作成・提出',sub:'制作費・オプション費・保守費を分けて記載。値引き交渉の余地も設計する',tags:['ai','tmpl']},
+    {id:'t1_10',text:'契約書締結・着手金受領（全体の30〜50%）',sub:'着手金なしは絶対NG。契約書には修正回数・著作権・支払条件を必ず明記',tags:['imp','tmpl']},
+  ],
+  templates:[
+    {title:'📄 ヒアリングシート（25項目）',content:`【Web制作 ヒアリングシート】
+
+■ 基本情報
+1. 会社名 / 個人名:
+2. 担当者名・役職:
+3. 連絡先（メール・電話）:
+4. Webサイト URL（現在のサイト）:
+
+■ 目的・ゴール
+5. 制作の目的（新規作成 / リニューアル）:
+6. 達成したいゴール・KPI:
+7. 現在の課題・悩み:
+
+■ ターゲット
+8. メインターゲット（年齢・性別・職業）:
+9. 地域（全国 / 特定エリア）:
+10. ターゲットのお悩み・ニーズ:
+
+■ コンテンツ・機能
+11. 必要なページ（TOP / 会社概要 / サービス / ブログ etc.）:
+12. お問い合わせフォームの要否:
+13. EC機能（オンライン決済）の要否:
+14. 予約機能の要否:
+15. 多言語対応の要否:
+16. 会員機能の要否:
+
+■ デザイン
+17. 参考サイト（好き）URL:
+18. 参考サイト（嫌い）URL:
+19. 既存ブランドカラー・ロゴの有無:
+20. 雰囲気（クール/ポップ/ナチュラル等）:
+
+■ 素材・コンテンツ
+21. テキストの用意（あり / なし / 要ライティング）:
+22. 写真・画像の用意（あり / なし / 要撮影）:
+23. ロゴデータの形式（AI / PNG / なし）:
+
+■ スケジュール・予算
+24. 公開希望日:
+25. 予算の目安（万円）: `},
+    {title:'📄 見積書テンプレート',content:`【Web制作 お見積書】
+
+御社名: 〇〇株式会社 御中
+見積日: 20XX年XX月XX日
+有効期限: 発行日より30日間
+担当: [あなたの名前]
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+■ 制作内容
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+No  内容                     数量  単価     小計
+1   Webサイト設計・ヒアリング   1式  30,000   30,000
+2   TOPページデザイン・実装     1式  50,000   50,000
+3   下層ページ（〇ページ）      〇p  20,000  ○○,000
+4   お問い合わせフォーム設置    1式  15,000   15,000
+5   スマホ対応（レスポンシブ）  1式  20,000   20,000
+6   SEO基本設定               1式  10,000   10,000
+7   サーバー・ドメイン初期設定  1式  10,000   10,000
+8   納品・運用マニュアル作成    1式  10,000   10,000
+
+                          小計    ○○○,000円
+                          消費税(10%)  ○○,000円
+                          合計    ○○○,000円
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+■ オプション（別途）
+━━━━━━━━━━━━━━━━━━━━━━━━
+・ブログ・ニュース機能追加     +20,000円
+・Google Analytics設定          +5,000円
+・月次保守プラン（月額）       +10,000円〜
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+■ お支払い条件
+━━━━━━━━━━━━━━━━━━━━━━━━
+・着手金: 合計の50% — 契約締結時
+・残金:  合計の50% — 納品検収後7日以内
+・修正: 初稿から2回まで無料 / 以降1回 5,000円
+・著作権: 全額入金完了後にクライアントへ移転`},
+  ]
+},
+{
+  id:'p2', num:2, icon:'🗺️', name:'要件定義・設計',
+  color:'#00d4aa',
+  desc:'確定した要件をもとにサイトマップ・ワイヤーフレームを設計。クライアント承認を取ってから制作開始する。',
+  time:'2〜5日', taskCount:8,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ2',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>に業種・目的を伝えて<b>サイトマップの構成案</b>を複数パターン生成させる'},
+      {icon:'✨',text:'<b>ChatGPT</b>でSEOキーワードを調査。「〇〇業界の見込み客が検索するキーワード20件リストアップして」'},
+      {icon:'✨',text:'<b>Figma AI</b>でワイヤーフレームの叩き台を自動生成。修正に集中できる'},
+    ]
+  },
+  tasks:[
+    {id:'t2_1',text:'サイトマップ（ページ構成）を作成',sub:'ページ名・階層・URL設計を一覧化。スプレッドシートかFigmaで管理',tags:['ai']},
+    {id:'t2_2',text:'サイトマップをクライアント承認',sub:'ここで承認を取ると後工程での「ページ追加」要求を防げる',tags:['imp']},
+    {id:'t2_3',text:'TOPページのワイヤーフレーム作成',sub:'FigmaかXDで。グレースケールでOK。デザインより構造を先に確定',tags:['ai']},
+    {id:'t2_4',text:'下層ページのワイヤーフレーム作成',sub:'繰り返しパターン（記事一覧→詳細など）はテンプレート化して効率化',tags:[]},
+    {id:'t2_5',text:'ワイヤーフレームをクライアント承認',sub:'「これ以降の構成変更は追加費用が発生します」と一言添える',tags:['imp']},
+    {id:'t2_6',text:'テキストコンテンツの収集・確認',sub:'クライアント提供の場合は期限を設定。遅延は制作スケジュール遅延として記録する',tags:['imp']},
+    {id:'t2_7',text:'画像・動画素材の収集・確認',sub:'著作権クリアの素材のみ使用。フリー素材はUnsplash・Pixabay・いらすとやを活用',tags:[]},
+    {id:'t2_8',text:'技術スタックと制作スケジュール確定',sub:'WordPress / Webflow / STUDIO / コーディングから最適選択。スケジュールを書面で共有',tags:[]},
+  ],
+  templates:[
+    {title:'📄 制作スケジュール表テンプレート',content:`【Web制作 スケジュール表】
+
+プロジェクト名: 〇〇様 Webサイト制作
+契約日: 20XX/XX/XX
+公開予定日: 20XX/XX/XX
+
+━━━━━━━━━━━━━━━━━━━━
+フェーズ           期間          担当
+━━━━━━━━━━━━━━━━━━━━
+①要件定義・設計   XX/XX〜XX/XX  制作者
+②デザイン（TOP）  XX/XX〜XX/XX  制作者
+  └ 修正期間       XX/XX〜XX/XX  クライアント ★要返信
+③デザイン（下層）  XX/XX〜XX/XX  制作者
+  └ 修正期間       XX/XX〜XX/XX  クライアント ★要返信
+④コーディング     XX/XX〜XX/XX  制作者
+⑤テスト・確認     XX/XX〜XX/XX  制作者＋クライアント
+  └ 最終確認       XX/XX〜XX/XX  クライアント ★要返信
+⑥本番公開・納品   XX/XX          制作者
+━━━━━━━━━━━━━━━━━━━━
+
+【クライアント様へのお願い】
+・「★要返信」の期限を過ぎると公開日が遅延します
+・素材提供は XX/XX までにお願いします
+・修正は初稿から2回まで無料です（3回目〜 5,000円/回）`},
+  ]
+},
+{
+  id:'p3', num:3, icon:'🎨', name:'デザイン',
+  color:'#ff6b9d',
+  desc:'ブランドの世界観を視覚化するフェーズ。TOPデザインをクライアントが承認してから下層ページに展開する。',
+  time:'3〜7日', taskCount:9,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ3',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>でキャッチコピー・ヘッドライン文を10案生成させる。「〇〇業の顧客に響くコピーを書いて」'},
+      {icon:'✨',text:'<b>DALL-E / Midjourney / Firefly</b>でビジュアルイメージのコンセプト画像を生成してデザインの方向性確認に活用'},
+      {icon:'✨',text:'<b>Adobe Color / Coolors</b>でカラーパレットを自動提案。ブランドカラーからAIが配色展開'},
+    ]
+  },
+  tasks:[
+    {id:'t3_1',text:'カラーパレット・フォント選定',sub:'最大3色（メイン・サブ・アクセント）。フォントは基本2種まで（見出し・本文）',tags:['ai']},
+    {id:'t3_2',text:'TOPページ（PCデザイン）作成',sub:'ファーストビューが最重要。8秒以内に価値が伝わるか確認する',tags:[]},
+    {id:'t3_3',text:'TOPページ（SPデザイン）作成',sub:'今やアクセスの60〜70%がスマホ。PC後でもSPは必ず別途確認する',tags:['imp']},
+    {id:'t3_4',text:'TOPデザインをクライアント提出・フィードバック収集',sub:'修正フィードバックは必ず「書面（メール等）」でもらう。口頭指示は後で揉める',tags:['imp']},
+    {id:'t3_5',text:'TOPデザイン修正（無料2回まで）',sub:'修正の都度バージョン管理を徹底。Figmaはバージョン履歴が自動保存される',tags:[]},
+    {id:'t3_6',text:'TOPデザイン最終承認',sub:'承認のメールを保存しておく。後から「こんな依頼はしていない」を防ぐ証跡',tags:['imp']},
+    {id:'t3_7',text:'下層ページデザイン作成（TOPのスタイルを踏襲）',sub:'ガイドライン・スタイルガイドをFigmaで管理すると下層展開が速い',tags:[]},
+    {id:'t3_8',text:'画像の加工・リサイズ・WebP変換',sub:'表示速度に直結。画像は最大2MB以下、WebP形式推奨（Squooshで変換）',tags:[]},
+    {id:'t3_9',text:'デザイン全体（全ページ）クライアント承認',sub:'「このデザイン通りに実装します」という確認メールを取得してから着手',tags:['imp']},
+  ],
+  templates:[]
+},
+{
+  id:'p4', num:4, icon:'💻', name:'コーディング・実装',
+  color:'#ffd93d',
+  desc:'承認済みデザインを忠実にHTML/CSS/JSで実装するフェーズ。AIコーディングアシスタントで生産性を最大化する。',
+  time:'5〜14日', taskCount:11,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ4',
+    tips:[
+      {icon:'✨',text:'<b>GitHub Copilot</b>で繰り返しコーディングを自動補完。CSSアニメーション・JSバリデーションは特に効果大'},
+      {icon:'✨',text:'<b>v0 by Vercel</b>でFigmaデザインからReactコンポーネントを自動生成。実装コストを大幅削減'},
+      {icon:'✨',text:'<b>ChatGPT</b>にエラーメッセージを貼り付けてデバッグ。WPカスタマイズのPHPも日本語で質問できる'},
+      {icon:'✨',text:'<b>STUDIO / Webflow / WordPress</b>のノーコードツールでコーディング不要の案件ならさらに効率化'},
+    ]
+  },
+  tasks:[
+    {id:'t4_1',text:'サーバー・ドメイン設定',sub:'エックスサーバー / ConoHa / ロリポップ等。ドメイン取得〜DNS設定〜SSL証明書(Let\'s Encrypt)',tags:[]},
+    {id:'t4_2',text:'開発環境構築（ローカル環境）',sub:'WordPress: Local by Flywheel推奨。静的サイト: VS Code + Live Server',tags:[]},
+    {id:'t4_3',text:'WordPress/CMSインストール・初期設定',sub:'管理者パスワードは強固に。初期プラグイン（SEO・セキュリティ・キャッシュ）を設定',tags:[]},
+    {id:'t4_4',text:'テーマ/テンプレート選定・カスタマイズ',sub:'Cocoon（無料）/ Swell・Lightning（有料）。カスタム投稿タイプはプラグインで対応',tags:[]},
+    {id:'t4_5',text:'TOPページ実装',sub:'CSSは変数（カスタムプロパティ）を使う。後の色変更が1行で済む',tags:['ai']},
+    {id:'t4_6',text:'下層ページ実装',sub:'共通パーツ（ヘッダー・フッター・CTAボタン）は再利用可能なコンポーネントとして管理',tags:['ai']},
+    {id:'t4_7',text:'ナビゲーション・ハンバーガーメニュー実装',sub:'SP版のメニューは実機（iOS/Android）で必ず確認。SafariのCSS対応に注意',tags:['ai']},
+    {id:'t4_8',text:'お問い合わせフォーム実装',sub:'WordPress: Contact Form 7 / WPForms。静的サイト: formspree.io / netlify forms',tags:[]},
+    {id:'t4_9',text:'Google Analytics 4（GA4）設置',sub:'タグマネージャー（GTM）経由が管理しやすい。目標（コンバージョン）設定まで実施',tags:[]},
+    {id:'t4_10',text:'SEO基本設定',sub:'title / description / OGP / robots.txt / sitemap.xml。RankMath / Yoast SEOで設定',tags:['imp']},
+    {id:'t4_11',text:'本番環境へのステージング（確認用URL）を共有',sub:'本番前に一度クライアントに確認URLを共有して大きなズレをここで修正する',tags:['imp']},
+  ],
+  templates:[]
+},
+{
+  id:'p5', num:5, icon:'🧪', name:'テスト・検証',
+  color:'#ff922b',
+  desc:'公開前の品質保証フェーズ。表示速度・クロスブラウザ・スマホ対応・フォーム動作を必ずチェックする。',
+  time:'1〜3日', taskCount:9,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ5',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>でバグレポートの文章を生成。「このCSSバグの再現手順と回避策を書いて」'},
+      {icon:'✨',text:'<b>PageSpeed Insights</b>のレポートをChatGPTに貼り付けて「改善優先度と対策を教えて」と聞く'},
+    ]
+  },
+  tasks:[
+    {id:'t5_1',text:'PC表示確認（Chrome / Firefox / Safari / Edge）',sub:'Can I Use で未対応CSSを確認。IE11は2022年サポート終了済みで原則対応不要',tags:[]},
+    {id:'t5_2',text:'スマートフォン表示確認（iOS Safari / Android Chrome）',sub:'実機確認が最重要。BrowserStack でデバイス実機テストも活用可',tags:['imp']},
+    {id:'t5_3',text:'タブレット表示確認（iPad等）',sub:'breakpoint 768px / 1024px 付近の崩れを確認',tags:[]},
+    {id:'t5_4',text:'全ページのリンク動作確認',sub:'Broken Link Checker（WPプラグイン）またはDead Link Checker（オンライン）で一括確認',tags:[]},
+    {id:'t5_5',text:'お問い合わせフォームの送受信確認',sub:'テスト送信→クライアントのメールに届くか確認。スパム対策（reCAPTCHA）も確認',tags:['imp']},
+    {id:'t5_6',text:'表示速度測定と最適化',sub:'PageSpeed Insights で PC/SP両方スコア確認。目標: 80点以上。画像圧縮・キャッシュ設定が効果的',tags:['ai']},
+    {id:'t5_7',text:'SSL証明書の有効確認（https://）',sub:'「保護されていない通信」警告が出ないか確認。混在コンテンツ（http画像）も除去',tags:[]},
+    {id:'t5_8',text:'SEO確認（Google Search Consoleへの送信）',sub:'サイトマップをサーチコンソールに送信。インデックス登録リクエストも実施',tags:[]},
+    {id:'t5_9',text:'クライアントによる最終確認・承認',sub:'「この内容で公開します」の確認メールを取得。後のクレーム防止に必須',tags:['imp']},
+  ],
+  templates:[
+    {title:'📄 納品前チェックリスト（30項目）',content:`【納品前チェックリスト】
+
+■ 表示・デザイン
+□ PC（Chrome）で全ページ表示確認
+□ PC（Firefox）で全ページ表示確認
+□ PC（Safari）で全ページ表示確認
+□ PC（Edge）で全ページ表示確認
+□ スマートフォン（iOS Safari）表示確認
+□ スマートフォン（Android Chrome）表示確認
+□ タブレット（iPad）表示確認
+□ 全フォントが正しく表示されている
+□ 画像が全て表示されている（alt属性あり）
+□ ファビコンが設定されている
+
+■ リンク・フォーム
+□ ナビゲーションリンクが全て正常
+□ ボタン・CTAリンクが正常
+□ SNSリンクが正しいURLに設定
+□ 外部リンクがすべて target="_blank"
+□ フォーム送信テスト（テストメール受信確認）
+□ スパム対策（reCAPTCHA）が動作している
+□ サンクスページへのリダイレクトが正常
+
+■ SEO・解析
+□ 全ページのタイトルタグが設定されている
+□ メタディスクリプションが設定されている
+□ OGP（SNSシェア用）タグが設定されている
+□ robots.txtが設定されている
+□ sitemap.xmlが生成されている
+□ Google Analytics 4が動作している
+□ Google Search Consoleにサイトマップ送信済み
+
+■ セキュリティ・パフォーマンス
+□ SSL（https）が有効
+□ 混在コンテンツ（httpリソース）がない
+□ PageSpeed Insights PC 80点以上
+□ PageSpeed Insights SP 70点以上
+□ WordPress管理者URLをデフォルトから変更済み
+□ 不要なプラグインを削除済み`},
+  ]
+},
+{
+  id:'p6', num:6, icon:'📦', name:'納品',
+  color:'#4ade80',
+  desc:'最終修正〜本番公開〜アカウント情報引き渡しまで。残金回収と運用マニュアル提供で顧客満足度を高める。',
+  time:'1〜2日', taskCount:8,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ6',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>に操作手順メモを渡して「クライアント向けの優しいWordPress運用マニュアルをPDF用に整えて」'},
+      {icon:'✨',text:'<b>ChatGPT</b>で納品メールの文章を生成。感謝・次のアクション・保守提案を自然な流れで盛り込む'},
+    ]
+  },
+  tasks:[
+    {id:'t6_1',text:'最終修正対応（承認済みフィードバック分）',sub:'承認外の変更依頼は追加費用として再見積もり。書面で残す',tags:[]},
+    {id:'t6_2',text:'本番サーバーへのデプロイ',sub:'ローカル → 本番の移行。All-in-One WP Migrationなどプラグインで効率化',tags:[]},
+    {id:'t6_3',text:'本番URLでの最終表示確認',sub:'本番環境固有の問題（パーマリンク設定・画像パスなど）を確認',tags:['imp']},
+    {id:'t6_4',text:'不要ファイル・テストデータの削除',sub:'テスト投稿・デモ画像・未使用プラグイン・readme.htmlを削除',tags:[]},
+    {id:'t6_5',text:'運用マニュアル作成・提供',sub:'記事投稿・画像変更・お問い合わせ確認など基本操作をスクリーンショット付きでPDF化',tags:['ai']},
+    {id:'t6_6',text:'ログイン情報・アカウント情報の引き渡し',sub:'管理画面URL / ID / PW / FTPアカウント / サーバー情報を暗号化ファイルまたはパスワードマネージャーで共有',tags:['imp']},
+    {id:'t6_7',text:'残金（50〜70%）の請求・入金確認',sub:'入金確認前に全情報を渡さない。著作権移転は全額入金後',tags:['imp']},
+    {id:'t6_8',text:'納品完了メール送付',sub:'感謝の言葉＋今後の保守プラン提案を自然に盛り込む',tags:['ai','tmpl']},
+  ],
+  templates:[
+    {title:'📄 納品完了メールテンプレート',content:`件名: 【納品完了】〇〇様のWebサイトが公開されました！
+
+〇〇様
+
+お世話になっております。[あなたの名前]です。
+
+この度は、Webサイト制作のご依頼をいただき、誠にありがとうございました。
+本日、サイトの公開作業が完了しましたのでご報告いたします。
+
+■ 公開URL
+https://example.com
+
+■ 管理画面情報（別添 or パスワードマネージャーでご共有）
+・WordPress管理画面: https://example.com/wp-login.php
+・ログインID: ○○
+・パスワード: ※別途ご連絡
+
+■ 今後の運用について
+ご提供した「運用マニュアル（PDF）」をご参照ください。
+記事更新・画像変更など基本操作は図解入りで解説しています。
+
+■ 保守・サポートプランのご案内
+公開後のバックアップ管理・プラグイン更新・軽微な修正対応を
+月額 ¥10,000〜 でお受けしております。
+ご関心がございましたらお気軽にご相談ください。
+
+引き続きどうぞよろしくお願いいたします。
+
+[あなたの名前]
+[連絡先]`},
+  ]
+},
+{
+  id:'p7', num:7, icon:'🤝', name:'アフターフォロー',
+  color:'#a78bfa',
+  desc:'納品後のフォローが次の案件・紹介・保守契約につながる。顧客との長期関係構築が月収安定化の鍵。',
+  time:'継続', taskCount:7,
+  aiBox:{
+    title:'🤖 AI活用ポイント — フェーズ7',
+    tips:[
+      {icon:'✨',text:'<b>ChatGPT</b>でフォローアップメールの文章を生成。「1週間後のチェックインメール」「保守提案メール」など'},
+      {icon:'✨',text:'<b>ChatGPT</b>で月次レポートの文章を自動生成。GA4のデータをペーストして「クライアント向けのレポートにして」'},
+      {icon:'✨',text:'定期報告を自動化して<b>保守契約の価値を可視化</b>。アクセス数・問い合わせ数の変化をわかりやすく伝える'},
+    ]
+  },
+  tasks:[
+    {id:'t7_1',text:'納品1週間後フォローアップ連絡',sub:'「問題はありませんか？」の一言で印象が大きく変わる。困りごとから追加案件が生まれる',tags:['ai','tmpl']},
+    {id:'t7_2',text:'Google Search Console・GA4の設定支援',sub:'SEOデータが見られるようにしてあげると喜ばれる。解析の価値を実感させる',tags:[]},
+    {id:'t7_3',text:'WordPress操作レクチャー（オンライン30〜60分）',sub:'操作に自信をもってもらうことで「問い合わせしやすいクリエイター」ポジションを確立',tags:[]},
+    {id:'t7_4',text:'月次レポート提供（保守契約者）',sub:'アクセス推移・問い合わせ数・改善提案を1〜2枚のPDFで毎月送付',tags:['ai']},
+    {id:'t7_5',text:'追加制作・リニューアルの提案',sub:'公開3〜6ヶ月後に「SEO強化ブログ追加」「デザインリフレッシュ」を提案するのが鉄板タイミング',tags:['imp']},
+    {id:'t7_6',text:'紹介・口コミ依頼',sub:'満足度が高い納品後1〜2ヶ月以内が最も紹介をもらいやすい。Googleビジネスプロフィールへの口コミもお願いする',tags:['imp']},
+    {id:'t7_7',text:'ポートフォリオ・制作事例への掲載許諾',sub:'「実績として掲載させてください」と依頼。許諾書（メール可）を残しておく',tags:[]},
+  ],
+  templates:[
+    {title:'📄 1週間後フォローメールテンプレート',content:`件名: 公開後1週間が経ちました！いかがでしょうか？
+
+〇〇様
+
+お世話になっております。[あなたの名前]です。
+
+先日納品しましたWebサイトの公開から1週間が経ちました。
+サイトの動作・使い心地はいかがでしょうか？
+
+ご不明点やお困りのことがあれば、いつでもお気軽にご連絡ください。
+
+なお、もしよろしければ以下についてもご検討いただけますと幸いです。
+
+■ Google Analytics（アクセス解析）の確認方法
+公開後のアクセス状況を確認できます。ご希望でしたら
+画面共有しながら見方をご説明します（30分程度・無料）。
+
+■ 月次保守プランについて
+WordPressのセキュリティアップデート・バックアップ管理・
+軽微な修正対応を月額 ¥10,000〜 でご提供しております。
+
+引き続き、どうぞよろしくお願いいたします。
+
+[あなたの名前]
+[連絡先]`},
+  ]
+},
+];
+
+// ── Pricing Data ──────────────────────────────────────────────────
+const PRICING = [
+  {type:'ランディングページ（LP）',page:'1ページ',price:'3〜8万円',day:'3〜7日'},
+  {type:'コーポレートサイト（小）',page:'5〜8ページ',price:'10〜20万円',day:'2〜4週'},
+  {type:'コーポレートサイト（中）',page:'10〜20ページ',price:'20〜40万円',day:'4〜8週'},
+  {type:'ポートフォリオサイト',page:'5〜10ページ',price:'5〜15万円',day:'1〜3週'},
+  {type:'ブログ・メディアサイト',page:'〜WordPress',price:'10〜30万円',day:'3〜6週'},
+  {type:'ECサイト（ショップ）',page:'〜Shopify等',price:'30〜80万円',day:'6〜12週'},
+  {type:'月次保守プラン',page:'継続',price:'1〜3万円/月',day:'継続'},
+];
+
+// ── State ─────────────────────────────────────────────────────────
+const STORAGE_KEY='ws_checklist_v1';
+function loadState(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}catch{return{}}}
+function saveState(s){localStorage.setItem(STORAGE_KEY,JSON.stringify(s))}
+
+let STATE=loadState();
+let currentPhase=PHASES[0].id;
+
+// ── Render ────────────────────────────────────────────────────────
+function renderAll(){
+  renderSidebar();
+  renderContent();
+  updateOverall();
+}
+
+function renderSidebar(){
+  const nav=document.getElementById('ph-nav');
+  nav.innerHTML=PHASES.map(ph=>{
+    const {done,total}=phaseProgress(ph);
+    const pct=total?Math.round(done/total*100):0;
+    const isDone=done===total&&total>0;
+    return `<div class="ph-item${currentPhase===ph.id?' active':''}${isDone?' done':''}" onclick="switchPhase('${ph.id}')">
+      <div class="ph-num">${isDone?'✓':ph.num}</div>
+      <div class="ph-info">
+        <div class="ph-name">${ph.icon} ${ph.name}</div>
+        <div class="ph-prog">${done}/${total} タスク完了</div>
+        <div class="ph-mini-bar"><div class="ph-mini-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function phaseProgress(ph){
+  const done=ph.tasks.filter(t=>STATE[t.id]).length;
+  return{done,total:ph.tasks.length};
+}
+
+function renderContent(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=PHASES.map(ph=>renderPhase(ph)).join('')+renderPricingPanel();
+  // bind template toggles
+  document.querySelectorAll('.tmpl-hd').forEach(h=>{
+    h.addEventListener('click',()=>{
+      const body=h.nextElementSibling;
+      const arrow=h.querySelector('.tmpl-arrow');
+      body.classList.toggle('open');
+      arrow.style.transform=body.classList.contains('open')?'rotate(180deg)':'';
+    });
+  });
+  // bind copy buttons
+  document.querySelectorAll('.tmpl-copy').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const pre=btn.previousElementSibling;
+      navigator.clipboard.writeText(pre.textContent).then(()=>{
+        btn.textContent='✓ コピーしました';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent='📋 コピー';btn.classList.remove('copied')},2000);
+      });
+    });
+  });
+}
+
+function renderPhase(ph){
+  const {done,total}=phaseProgress(ph);
+  const pct=total?Math.round(done/total*100):0;
+
+  const aiHtml=ph.aiBox?`<div class="ai-box">
+    <div class="ai-box-title">${ph.aiBox.title}</div>
+    ${ph.aiBox.tips.map(t=>`<div class="ai-tip">
+      <div class="ai-tip-icon">${t.icon}</div>
+      <span>${t.text}</span>
+    </div>`).join('')}
+  </div>`:'';
+
+  const tmplHtml=ph.templates.length?ph.templates.map(t=>`
+    <div class="tmpl-box">
+      <div class="tmpl-hd">
+        <span class="tmpl-title">${t.title}</span>
+        <span class="tmpl-arrow">▼</span>
+      </div>
+      <div class="tmpl-body">
+        <div class="tmpl-content">${escHtml(t.content)}</div>
+        <button class="tmpl-copy">📋 コピー</button>
+      </div>
+    </div>`).join(''):'';
+
+  const taskHtml=ph.tasks.map(t=>{
+    const isDone=!!STATE[t.id];
+    const tags=(t.tags||[]).map(tg=>({
+      ai:`<span class="ttag ttag-ai">🤖 AI活用</span>`,
+      imp:`<span class="ttag ttag-imp">⚡ 重要</span>`,
+      tmpl:`<span class="ttag ttag-tmpl">📄 テンプレあり</span>`,
+      note:`<span class="ttag ttag-note">📝 注意</span>`,
+    }[tg]||'')).join('');
+    return `<div class="task${isDone?' done':''}" onclick="toggleTask('${t.id}')">
+      <div class="task-cb"><span class="task-cb-icon">✓</span></div>
+      <div class="task-body">
+        <div class="task-text">${t.text}</div>
+        ${t.sub?`<div class="task-sub">${t.sub}</div>`:''}
+        ${tags?`<div class="task-tags">${tags}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="phase-panel${currentPhase===ph.id?' active':''}" id="${ph.id}">
+    <div class="ph-hd">
+      <div class="ph-hd-num" style="background:${ph.color}">${ph.num}</div>
+      <div class="ph-hd-info">
+        <div class="ph-hd-title">${ph.icon} ${ph.name}</div>
+        <div class="ph-hd-desc">${ph.desc}</div>
+        <div class="ph-hd-meta">
+          <span class="meta-tag time">⏱ 目安: ${ph.time}</span>
+          <span class="meta-tag tasks">✅ ${total}タスク</span>
+        </div>
+      </div>
+      <div class="ph-hd-prog">
+        <div class="ph-pct-big" id="${ph.id}-pct">${pct}%</div>
+        <div class="ph-pct-label">${done} / ${total}</div>
+      </div>
+    </div>
+    ${aiHtml}
+    ${tmplHtml?`<div class="section"><div class="section-title">テンプレート</div>${tmplHtml}</div>`:''}
+    <div class="section">
+      <div class="section-title">タスクチェックリスト</div>
+      <div class="task-list">${taskHtml}</div>
+    </div>
+  </div>`;
+}
+
+function renderPricingPanel(){
+  const rows=PRICING.map(p=>`<tr>
+    <td>${p.type}</td>
+    <td>${p.page}</td>
+    <td class="price-range">${p.price}</td>
+    <td>${p.day}</td>
+  </tr>`).join('');
+  return `<div class="phase-panel${currentPhase==='pricing'?' active':''}" id="pricing" style="max-width:760px">
+    <div class="ph-hd">
+      <div class="ph-hd-num" style="background:#f97316">💴</div>
+      <div class="ph-hd-info">
+        <div class="ph-hd-title">💴 単価設定・料金参考表</div>
+        <div class="ph-hd-desc">Web制作の相場と制作日数の目安。AIツール活用で制作時間を短縮しても単価は下げない。</div>
+      </div>
+    </div>
+    <div class="info-box warn">
+      <span class="info-icon">💡</span>
+      <span><b>月収100万円の方程式</b>: 月5〜10案件 × 単価10〜20万円 で達成可能。AIで工数削減した分は品質向上か案件数増に充てる。単価を下げる理由にしない。</span>
+    </div>
+    <div class="info-box ok">
+      <span class="info-icon">⚡</span>
+      <span><b>修正ルールを契約に明記</b>: 「初稿から2回まで無料、以降1回 5,000円」の一文がスコープクリープ防止に絶大な効果を発揮する。</span>
+    </div>
+    <div class="section">
+      <div class="section-title">制作種別 料金目安</div>
+      <table class="price-table">
+        <thead><tr><th>制作種別</th><th>規模</th><th>相場単価</th><th>制作日数</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="info-box tip">
+      <span class="info-icon">📈</span>
+      <span>手順書を提案書に添付して「プロフェッショナルな進行プロセス」をアピールすると<b>採択率と成約単価が上がる</b>。クラウドワークス / ランサーズで差別化ポイントに活用する。</span>
+    </div>
+  </div>`;
+}
+
+// ── Summary Panel ─────────────────────────────────────────────────
+function renderSummaryCard(){
+  // rendered as part of ph-nav footer
+}
+
+// ── Interaction ───────────────────────────────────────────────────
+function switchPhase(id){
+  currentPhase=id;
+  document.querySelectorAll('.phase-panel').forEach(p=>p.classList.toggle('active',p.id===id));
+  document.querySelectorAll('.ph-item').forEach(i=>i.classList.toggle('active',i.getAttribute('onclick').includes(`'${id}'`)));
+  document.getElementById('main-content').scrollTo(0,0);
+  updateSidebarItems();
+}
+
+function toggleTask(id){
+  STATE[id]=!STATE[id];
+  saveState(STATE);
+  // Update the clicked task DOM
+  const tasks=document.querySelectorAll('.task');
+  tasks.forEach(el=>{
+    if(el.getAttribute('onclick').includes(`'${id}'`)){
+      el.classList.toggle('done',STATE[id]);
+    }
+  });
+  updatePhaseProgress();
+  updateOverall();
+}
+
+function updatePhaseProgress(){
+  PHASES.forEach(ph=>{
+    const{done,total}=phaseProgress(ph);
+    const pct=total?Math.round(done/total*100):0;
+    const pctEl=document.getElementById(ph.id+'-pct');
+    if(pctEl)pctEl.textContent=pct+'%';
+  });
+  updateSidebarItems();
+}
+
+function updateSidebarItems(){
+  const nav=document.getElementById('ph-nav');
+  nav.querySelectorAll('.ph-item').forEach((item,i)=>{
+    const ph=PHASES[i];if(!ph)return;
+    const{done,total}=phaseProgress(ph);
+    const pct=total?Math.round(done/total*100):0;
+    const isDone=done===total&&total>0;
+    item.querySelector('.ph-prog').textContent=`${done}/${total} タスク完了`;
+    item.querySelector('.ph-mini-fill').style.width=pct+'%';
+    const num=item.querySelector('.ph-num');
+    num.textContent=isDone?'✓':ph.num;
+    item.classList.toggle('done',isDone);
+  });
+}
+
+function updateOverall(){
+  const total=PHASES.reduce((s,ph)=>s+ph.tasks.length,0);
+  const done=PHASES.reduce((s,ph)=>s+ph.tasks.filter(t=>STATE[t.id]).length,0);
+  const pct=Math.round(done/total*100);
+  document.getElementById('ov-fill').style.width=pct+'%';
+  document.getElementById('ov-pct').textContent=pct+'%';
+  document.getElementById('ov-count').textContent=`${done} / ${total} タスク`;
+}
+
+function resetAll(){
+  if(!confirm('全チェックをリセットしますか？\n進捗はすべてクリアされます。'))return;
+  STATE={};saveState(STATE);
+  document.querySelectorAll('.task').forEach(el=>el.classList.remove('done'));
+  updatePhaseProgress();updateOverall();
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Add pricing nav item
+function addPricingNav(){
+  const nav=document.getElementById('ph-nav');
+  const div=document.createElement('div');
+  div.className='ph-item'+( currentPhase==='pricing'?' active':'');
+  div.setAttribute('onclick',"switchPhase('pricing')");
+  div.innerHTML=`<div class="ph-num">💴</div><div class="ph-info"><div class="ph-name">単価・料金参考表</div><div class="ph-prog">相場一覧</div></div>`;
+  nav.appendChild(div);
+}
+
+// Init
+renderAll();
+addPricingNav();
+updatePhaseProgress();
+</script>
+</body>
+</html>
